@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    tools:ignore="ExtraText">
+
+   <Button
+        android:id="@+id/btnRecognize"
+        android:layout_width="340dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="200dp"
+        android:text="Start"
+        android:textAllCaps="false"
+        android:textSize="34sp"
+        android:fontFamily="sans-serif-light"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/btnRecognize"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="center"-->
+<!--        android:layout_marginStart="175dp"-->
+<!--        android:layout_marginTop="191dp"-->
+<!--        android:layout_marginEnd="175dp"-->
+<!--        android:layout_marginBottom="480dp"-->
+<!--        android:backgroundTint="#6A43B1"-->
+<!--        android:src ="@drawable/ic_play"-->
+<!--        app:fabCustomSize="200dp"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        app:labelVisibilityMode="labeled"-->
+<!--        android:contentDescription="@string/start"-->
+<!--         />-->
+
+    <TextView
+        android:id="@+id/tvResult"
+        android:layout_width="350dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="50dp"
+        android:gravity="center"
+        android:hint=""
+        android:singleLine="false"
+        android:textAlignment="center"
+        android:textSize="58sp"
+        android:textColor="#D81111"
+        android:fontFamily="sans-serif-light"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnRecognize" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
