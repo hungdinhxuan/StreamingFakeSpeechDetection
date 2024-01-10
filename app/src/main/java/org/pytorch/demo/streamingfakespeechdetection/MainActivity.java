@@ -5,21 +5,27 @@ import static androidx.core.view.MenuItemCompat.setContentDescription;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -35,8 +41,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
-import java.util.Objects;
-
 
 public class MainActivity extends AppCompatActivity implements Runnable {
     private static final String TAG = MainActivity.class.getName();
@@ -54,13 +58,16 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private final static int CHUNK_SIZE = 640;
     private final static int INPUT_SIZE = 3200;
 
-
-
+    private VisualizerView visualizerView;
+    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        visualizerView = findViewById(R.id.visualizerView);
+        handler = new Handler(Looper.getMainLooper());
 
         mButton = findViewById(R.id.btnRecognize);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -70,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
 
         if (aasistModule == null) {
             System.out.println("Loading model...");
-            aasistModule = LiteModuleLoader.load(assetFilePath(getApplicationContext(), "aasist_ssl_w2v_hugging_face.ptl"));
+            aasistModule = LiteModuleLoader.load(assetFilePath(getApplicationContext(), "btsdetect_cnn_1s.ptl"));
             System.out.println("Loaded model aasistModule");
         }
 
@@ -82,11 +89,15 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                 if (mButton.getText().equals("Start")) {
                     mButton.setText("Listening... Stop");
                     mListening = true;
+
+
                 }
                 else {
                     mButton.setText("Start");
                     mListening = false;
                     showTranslationResult("");
+
+      
                 }
 
                 Thread thread = new Thread(MainActivity.this);
@@ -201,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         final long inferenceTime = SystemClock.elapsedRealtime() - startTime;
         Log.d(TAG, "inference time (ms): " + inferenceTime);
 
-        @SuppressLint("DefaultLocale") final String transcript = "FAKE (" + String.format("%.2g", 0.5) + "%)";
+        @SuppressLint("DefaultLocale") final String transcript = "FAKE (" + String.format("%.2g", score * 100) + "%)";
 
         Log.d(SCORE_TAG, "transcript=" + transcript);
 
