@@ -1,236 +1,103 @@
 package org.pytorch.demo.streamingfakespeechdetection;
+
+
 import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.AttributeSet;
-import android.widget.FrameLayout;
+import android.view.View;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- *
- *
- * Created by tyorikan on 2015/06/08.
- */
-public class VisualizerView extends FrameLayout {
+public class VisualizerView extends View {
 
-    private static final int DEFAULT_NUM_COLUMNS = 20;
-    private static final int RENDAR_RANGE_TOP = 0;
-    private static final int RENDAR_RANGE_BOTTOM = 1;
-    private static final int RENDAR_RANGE_TOP_BOTTOM = 2;
+    private static final int BAR_WIDTH = 10;
+    private static final int VALUE_TO_HEIGHT_SCALE = 10;
+    private static final int SPACE_BETWEEN_BARS = 5;
 
-    private int mNumColumns;
-    private int mRenderColor;
-    private int mType;
-    private int mRenderRange;
-
-    private int mBaseY;
-
-    private Canvas mCanvas;
-    private Bitmap mCanvasBitmap;
-    private Rect mRect = new Rect();
-    private Paint mPaint = new Paint();
-    private Paint mFadePaint = new Paint();
-
-    private float mColumnWidth;
-    private float mSpace;
+    private short[] audioData;
+    private Paint paint;
+    private short[] prevAudioData;
+    private List<Integer> graphData;
+    private long timestamp; // 추가된 부분
 
     public VisualizerView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context, attrs);
-        mPaint.setColor(mRenderColor);
-        mFadePaint.setColor(Color.argb(138, 255, 255, 255));
+        init();
     }
 
-    private void init(Context context, AttributeSet attrs) {
-        TypedArray args = context.obtainStyledAttributes(attrs, R.styleable.visualizerView);
-        mNumColumns = args.getInteger(R.styleable.visualizerView_numColumns, DEFAULT_NUM_COLUMNS);
-        mRenderColor = args.getColor(R.styleable.visualizerView_renderColor, Color.WHITE);
-        mType = args.getInt(R.styleable.visualizerView_renderType, Type.BAR.getFlag());
-        mRenderRange = args.getInteger(R.styleable.visualizerView_renderRange, RENDAR_RANGE_TOP);
-        args.recycle();
+
+    private void init() {
+        paint = new Paint();
+        paint.setColor(Color.BLUE);
+        paint.setStrokeWidth(1);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setAntiAlias(true);
+        graphData = new ArrayList<>();
+        timestamp = System.currentTimeMillis(); // 초기 타임 스템프 설정
     }
 
-    /**
-     * @param baseY center Y position of visualizer
-     */
 
-    public void setBaseY(int baseY) {
-        mBaseY = baseY;
+    public void updateVisualizer(short[] audioData) {
+        // Clone the audioData array to avoid modifying the original array
+        short[] clonedData = audioData.clone();
+        // Scale and add each value to the graphData list
+        for (int i = 0; i < clonedData.length; i++) {
+            int scaledValue = clonedData[i] / VALUE_TO_HEIGHT_SCALE;
+            //graphData.add(clonedData[i]);
+            graphData.add(scaledValue);
+            // Remove the oldest data if the graphData list exceeds the screen width
+            if (graphData.size() >= getWidth()) {
+                graphData.remove(0);
+            }
+        }
+        System.out.println(graphData);
+        // Invalidate the view to trigger onDraw and update the visualization
+        invalidate();
     }
+
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        // Create canvas once we're ready to draw
-        mRect.set(0, 0, getWidth(), getHeight());
-
-        if (mCanvasBitmap == null) {
-            mCanvasBitmap = Bitmap.createBitmap(
-                    canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
+        if (graphData == null) {
+            return;
         }
-
-        if (mCanvas == null) {
-            mCanvas = new Canvas(mCanvasBitmap);
-        }
-
-        if (mNumColumns > getWidth()) {
-            mNumColumns = DEFAULT_NUM_COLUMNS;
-        }
-
-        mColumnWidth = (float) getWidth() / (float) mNumColumns;
-        mSpace = mColumnWidth / 8f;
-
-        if (mBaseY == 0) {
-            mBaseY = getHeight() / 2;
-        }
-
-        canvas.drawBitmap(mCanvasBitmap, new Matrix(), null);
-    }
-
-    /**
-     *
-     *
-     * @param volume volume from mic input
-     */
-    protected void receive(final int volume) {
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                if (mCanvas == null) {
-                    return;
-                }
-
-                if (volume == 0) {
-                    mCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                } else if ((mType & Type.FADE.getFlag()) != 0) {
-                    // Fade out old contents
-                    mFadePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.MULTIPLY));
-                    mCanvas.drawPaint(mFadePaint);
-                } else {
-                    mCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                }
-
-                if ((mType & Type.BAR.getFlag()) != 0) {
-                    drawBar(volume);
-                }
-                if ((mType & Type.PIXEL.getFlag()) != 0) {
-                    drawPixel(volume);
-                }
-                invalidate();
+        int graphHeight = getHeight() / 2;
+        canvas.drawLine(0, graphHeight, getWidth(), graphHeight, paint);
+        if (!graphData.isEmpty()) {
+            for (int i = 0; i < graphData.size() - 1; i++) {
+                canvas.drawLine(
+                        getWidth() - graphData.size() + i,
+                        graphHeight - graphData.get(i),
+                        getWidth() - graphData.size() + i,
+                        graphHeight + graphData.get(i),
+                        paint);
             }
-        });
-    }
 
-    private void drawBar(int volume) {
-        for (int i = 0; i < mNumColumns; i++) {
-            float height = getRandomHeight(volume);
-            float left = i * mColumnWidth + mSpace;
-            float right = (i + 1) * mColumnWidth - mSpace;
 
-            RectF rect = createRectF(left, right, height);
-            mCanvas.drawRect(rect, mPaint);
-        }
-    }
 
-    private void drawPixel(int volume) {
-        for (int i = 0; i < mNumColumns; i++) {
-            float height = getRandomHeight(volume);
-            float left = i * mColumnWidth + mSpace;
-            float right = (i + 1) * mColumnWidth - mSpace;
+            // 타임 스템프 표시
+            long currentTime = System.currentTimeMillis();
+            long elapsedTime = currentTime - timestamp;
+            float elapsedSeconds = elapsedTime / 1000f; // 밀리초(ms)를 초로 변환
 
-            int drawCount = (int) (height / (right - left));
-            if (drawCount == 0) {
-                drawCount = 1;
-            }
-            float drawHeight = height / drawCount;
+            String timestampText = "Elapsed Time: " + elapsedSeconds + " seconds";
 
-            // draw each pixel
-            for (int j = 0; j < drawCount; j++) {
+            // 원하는 위치에 텍스트를 표시할 수 있도록 조정
+            float textX = 20;
+            float textY = 50;
+            paint.setTextSize(40);
+            canvas.drawText(timestampText, textX, textY, paint);
 
-                float top, bottom;
-                RectF rect;
-
-                switch (mRenderRange) {
-                    case RENDAR_RANGE_TOP:
-                        bottom = mBaseY - (drawHeight * j);
-                        top = bottom - drawHeight + mSpace;
-                        rect = new RectF(left, top, right, bottom);
-                        break;
-
-                    case RENDAR_RANGE_BOTTOM:
-                        top = mBaseY + (drawHeight * j);
-                        bottom = top + drawHeight - mSpace;
-                        rect = new RectF(left, top, right, bottom);
-                        break;
-
-                    case RENDAR_RANGE_TOP_BOTTOM:
-                        bottom = mBaseY - (height / 2) + (drawHeight * j);
-                        top = bottom - drawHeight + mSpace;
-                        rect = new RectF(left, top, right, bottom);
-                        break;
-
-                    default:
-                        return;
-                }
-                mCanvas.drawRect(rect, mPaint);
-            }
-        }
-    }
-
-    private float getRandomHeight(int volume) {
-        double randomVolume = Math.random() * volume + 1;
-        float height = getHeight();
-        switch (mRenderRange) {
-            case RENDAR_RANGE_TOP:
-                height = mBaseY;
-                break;
-            case RENDAR_RANGE_BOTTOM:
-                height = (getHeight() - mBaseY);
-                break;
-            case RENDAR_RANGE_TOP_BOTTOM:
-                height = getHeight();
-                break;
-        }
-        return (height / 60f) * (float) randomVolume;
-    }
-
-    private RectF createRectF(float left, float right, float height) {
-        switch (mRenderRange) {
-            case RENDAR_RANGE_TOP:
-                return new RectF(left, mBaseY - height, right, mBaseY);
-            case RENDAR_RANGE_BOTTOM:
-                return new RectF(left, mBaseY, right, mBaseY + height);
-            case RENDAR_RANGE_TOP_BOTTOM:
-                return new RectF(left, mBaseY - height, right, mBaseY + height);
-            default:
-                return new RectF(left, mBaseY - height, right, mBaseY);
-        }
-    }
-
-    /**
-     * visualizer type
-     */
-    public enum Type {
-        BAR(0x1), PIXEL(0x2), FADE(0x4);
-
-        private int mFlag;
-
-        Type(int flag) {
-            mFlag = flag;
         }
 
-        public int getFlag() {
-            return mFlag;
-        }
+
+
+
     }
 }
+
+

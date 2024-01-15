@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                     mListening = false;
                     showTranslationResult("");
 
-      
+
                 }
 
                 Thread thread = new Thread(MainActivity.this);
@@ -137,6 +137,14 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private void showTranslationResult(String result) {
         mTextView.setText(result);
     }
+    private void updateVisualizer(short[] audioBuffer) {
+        runOnUiThread(() -> {
+            visualizerView.updateVisualizer(audioBuffer);
+            showTranslationResult(all_result);
+        });
+    }
+
+
 
     public void run() {
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
@@ -149,6 +157,9 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             Log.e(TAG, "Audio Record can't initialize!");
             return;
         }
+
+
+
         record.startRecording();
 
         int chunkToRead = CHUNK_TO_READ;
@@ -156,9 +167,16 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         short[] recordingBuffer = new short[CHUNK_TO_READ*CHUNK_SIZE];
         double[] floatInputBuffer = new double[CHUNK_TO_READ * CHUNK_SIZE];
 
+
+
+
         while (mListening) {
+            short[] ListenBufffer=new short[bufferSize];
+            record.read(ListenBufffer,0, ListenBufffer.length);
+
             long shortsRead = 0;
             short[] audioBuffer = new short[bufferSize / 2];
+
 
             while (shortsRead < chunkToRead * CHUNK_SIZE) {
                 // for every segment of 5 chunks of data, we perform transcription
@@ -187,7 +205,8 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             recordingOffset = CHUNK_SIZE;
             System.arraycopy(recordingBuffer, chunkToRead * CHUNK_SIZE, recordingBuffer, 0, CHUNK_SIZE);
 
-            runOnUiThread(() -> showTranslationResult(all_result));
+            updateVisualizer(audioBuffer);
+
         }
 
         record.stop();
