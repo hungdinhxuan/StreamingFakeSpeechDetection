@@ -1,79 +1,68 @@
 package org.pytorch.demo.streamingfakespeechdetection;
 
-import static androidx.core.view.MenuItemCompat.getContentDescription;
-import static androidx.core.view.MenuItemCompat.setContentDescription;
+        import android.Manifest;
+        import android.annotation.SuppressLint;
+        import android.content.Context;
+        import android.content.pm.PackageManager;
+        import android.media.MediaCodec;
+        import android.media.MediaExtractor;
+        import android.media.MediaFormat;
+        import android.net.Uri;
+        import android.content.Intent;
+        import android.os.Build;
+        import android.os.Bundle;
+        import android.os.Handler;
+        import android.os.Looper;
+        import android.os.SystemClock;
+        import android.util.Log;
+        import android.widget.Button;
+        import android.widget.TextView;
+        import android.widget.Toast;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaPlayer;
-import android.media.MediaRecorder;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.SystemClock;
-import android.util.Log;
-import android.view.MenuItem;
-import android.view.SurfaceView;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
+        import androidx.activity.result.ActivityResultLauncher;
+        import androidx.activity.result.contract.ActivityResultContracts;
+        import androidx.annotation.NonNull;
+        import androidx.appcompat.app.AppCompatActivity;
 
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
+        import org.pytorch.IValue;
+        import org.pytorch.LiteModuleLoader;
+        import org.pytorch.Module;
+        import org.pytorch.Tensor;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+        import java.io.File;
+        import java.io.IOException;
+        import java.io.InputStream;
+        import java.io.OutputStream;
+        import java.nio.ByteBuffer;
+        import java.nio.FloatBuffer;
+        import java.nio.file.Files;
+        import java.util.ArrayList;
 
-import org.pytorch.IValue;
-import org.pytorch.LiteModuleLoader;
-import org.pytorch.Module;
-import org.pytorch.Tensor;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.FloatBuffer;
-import java.nio.file.Files;
-
-public class MainActivity extends AppCompatActivity implements Runnable {
+public class MainActivity extends AppCompatActivity{
     private static final String TAG = MainActivity.class.getName();
     private static final String SCORE_TAG = "FAKE %: ";
+    private static final int PICK_AUDIO_REQUEST_CODE = 1;
+    private static final int PERMISSION_REQUEST_CODE = 1;
 
     private Module aasistModule;
     private TextView mTextView;
     private Button mButton;
-    private boolean mListening;
-    private String all_result = "";
+    private final String all_result = "";
 
-    private final static int REQUEST_RECORD_AUDIO = 13;
-    private final static int SAMPLE_RATE = 16000;
-    private final static int CHUNK_TO_READ = 5;
-    private final static int CHUNK_SIZE = 640;
-    private final static int INPUT_SIZE = 3200;
-
-    private VisualizerView visualizerView;
+    private final static int INPUT_SIZE = 16000;
     private Handler handler;
+    private ActivityResultLauncher<String> mGetContent;
+    private Integer format;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        visualizerView = findViewById(R.id.visualizerView);
         handler = new Handler(Looper.getMainLooper());
 
-        mButton = findViewById(R.id.btnRecognize);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            mButton.setStateDescription("Listening... Stop");
-        }
-        mTextView = findViewById(R.id.tvResult);
+        mButton = findViewById(R.id.btnRecognize); // select file
+        mTextView = findViewById(R.id.tvResult); // Fake(0.0%)
 
         if (aasistModule == null) {
             System.out.println("Loading model...");
@@ -81,37 +70,40 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             System.out.println("Loaded model aasistModule");
         }
 
-        mButton.setOnClickListener(new View.OnClickListener() {
-
-            @SuppressLint({"UseCompatLoadingForDrawables", "SetTextI18n"})
-            public void onClick(View v) {
-
-                if (mButton.getText().equals("Start")) {
-                    mButton.setText("Listening... Stop");
-                    mListening = true;
-
-
+        ActivityResultLauncher<String> mGetContent = registerForActivityResult(
+                new ActivityResultContracts.GetContent(), uri -> {
+                    // uri를 처리하는 코드를 여기에 작성합니다.
+                    if (uri != null) {
+                        processAudioFile(uri); // float input, review to see how the model receive input.
+                        processAndShowResult(uri);
+                    }
+                });
+        mButton.setOnClickListener(v -> {
+            if (checkSelfPermission(Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                // 권한이 없는 경우, 권한 요청
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    requestPermissions(new String[]{Manifest.permission.READ_MEDIA_AUDIO}, PERMISSION_REQUEST_CODE);
                 }
-                else {
-                    mButton.setText("Start");
-                    mListening = false;
-                    showTranslationResult("");
-
-
-                }
-
-                Thread thread = new Thread(MainActivity.this);
-                thread.start();
+            } else {
+                // 권한이 있는 경우, 파일 선택
+                mGetContent.launch("audio/*");
             }
         });
-        requestMicrophonePermission();
     }
 
-    private void requestMicrophonePermission() {
-        requestPermissions(
-                new String[]{android.Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // 권한 허용된 경우, 파일 선택
+                mGetContent.launch("audio/*");
+            } else {
+                // 권한 거부된 경우, 경고 메시지 표시
+                Toast.makeText(this, "권한이 필요합니다.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
-
     private String assetFilePath(Context context, String assetName) {
         File file = new File(context.getFilesDir(), assetName);
         if (file.exists() && file.length() > 0) {
@@ -137,104 +129,156 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private void showTranslationResult(String result) {
         mTextView.setText(result);
     }
-    private void updateVisualizer(short[] audioBuffer) {
-        runOnUiThread(() -> {
-            visualizerView.updateVisualizer(audioBuffer);
-            showTranslationResult(all_result);
-        });
+
+    // onActivityResult에서 사용자가 선택한 파일의 URI를 받아옵니다.
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_AUDIO_REQUEST_CODE && resultCode == RESULT_OK) {
+            Uri audioUri = data.getData();
+            processAudioFile(audioUri); // float input, review to see how the model receive input.
+            processAndShowResult(audioUri);
+        }
     }
 
-
-
-    public void run() {
-        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
-
-        final int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        @SuppressLint("MissingPermission") final AudioRecord record = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
-                bufferSize);
-
-        if (record.getState() != AudioRecord.STATE_INITIALIZED) {
-            Log.e(TAG, "Audio Record can't initialize!");
-            return;
+    // 오디오 파일을 처리하는 메서드
+    private void processAndShowResult(Uri audioUri) {
+        float[] pcmData = processAudioFile(audioUri);
+        if (pcmData != null) {
+            String result = detect(pcmData);
+            showTranslationResult(result);
         }
+    }
+    private float[] processAudioFile(Uri audioUri) {
+        MediaExtractor extractor = new MediaExtractor();
+        ArrayList<Float> floatInputBuffer = new ArrayList<>();
+        try {
+            extractor.setDataSource(this, audioUri, null); // 데이터 소스 설정
+            int audioTrackIdx = findAudioTrack(extractor); // 오디오 트랙찾기
+            if (audioTrackIdx != -1) {
+                extractor.selectTrack(audioTrackIdx);
 
+                MediaFormat format = extractor.getTrackFormat(audioTrackIdx);
+                String mime = format.getString(MediaFormat.KEY_MIME);
+                MediaCodec codec = MediaCodec.createDecoderByType(mime);
+                codec.configure(format, null, null, 0);
+                codec.start();
 
+                ByteBuffer[] inputBuffers = codec.getInputBuffers();
+                ByteBuffer[] outputBuffers = codec.getOutputBuffers();
 
-        record.startRecording();
+                final long kTimeOutUs = 10000;
+                MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+                boolean sawInputEOS = false;
+                boolean sawOutputEOS = false;
 
-        int chunkToRead = CHUNK_TO_READ;
-        int recordingOffset = 0;
-        short[] recordingBuffer = new short[CHUNK_TO_READ*CHUNK_SIZE];
-        double[] floatInputBuffer = new double[CHUNK_TO_READ * CHUNK_SIZE];
+                while (!sawOutputEOS) {
+                    if (!sawInputEOS) {
+                        int inputBufIndex = codec.dequeueInputBuffer(kTimeOutUs);
+                        if (inputBufIndex >= 0) {
+                            ByteBuffer dstBuf = inputBuffers[inputBufIndex];
+                            int sampleSize = extractor.readSampleData(dstBuf, 0);
+                            long presentationTimeUs = 0;
+                            if (sampleSize < 0) {
+                                sawInputEOS = true;
+                                sampleSize = 0;
+                            } else {
+                                presentationTimeUs = extractor.getSampleTime();
+                            }
+                            codec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+                            if (!sawInputEOS) {
+                                extractor.advance();
+                            }
+                        }
+                    }
 
+                    int outputBufIndex = codec.dequeueOutputBuffer(info, kTimeOutUs);
+                    if (outputBufIndex >= 0) {
+                        ByteBuffer buf = outputBuffers[outputBufIndex];
+                        final byte[] chunk = new byte[info.size];
+                        buf.get(chunk);
+                        buf.clear();
+                        if (chunk.length > 0) {
+                            //chunk에 담긴 16비트 PCM 형식의 데이터를 처리.
+                            for (int i = 0; i < chunk.length; i += 2) {
+                                // byte를 short로 변환
+                                short audioSample = (short)((chunk[i] & 0xff) | (chunk[i+1] << 8));
+                                // short를 float로 변환, floatInputBuffer에 추가
+                                floatInputBuffer.add((float)audioSample / 32768.0f);
+                            }
+                        }
+                        codec.releaseOutputBuffer(outputBufIndex, false);
+                        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                            sawOutputEOS = true;
+                        }
+                    }
+                }
+                codec.stop();
+                codec.release();
 
-
-
-        while (mListening) {
-            short[] ListenBufffer=new short[bufferSize];
-            record.read(ListenBufffer,0, ListenBufffer.length);
-
-            long shortsRead = 0;
-            short[] audioBuffer = new short[bufferSize / 2];
-
-
-            while (shortsRead < chunkToRead * CHUNK_SIZE) {
-                // for every segment of 5 chunks of data, we perform transcription
-                // each successive segment’s first chunk is exactly the preceding segment’s last chunk
-                int numberOfShort = record.read(audioBuffer, 0, audioBuffer.length);
-                shortsRead += numberOfShort;
-                int x = (int) (numberOfShort - (shortsRead - chunkToRead * CHUNK_SIZE));
-                if (shortsRead > chunkToRead * CHUNK_SIZE)
-                    System.arraycopy(audioBuffer, 0, recordingBuffer, recordingOffset, (int) (numberOfShort - (shortsRead - chunkToRead*640)));
-                else
-                    System.arraycopy(audioBuffer, 0, recordingBuffer, recordingOffset, numberOfShort);
-
-                recordingOffset += numberOfShort;
+                float[] pcmData = new float[floatInputBuffer.size()];
+                for (int i = 0; i < floatInputBuffer.size(); i++) {
+                    pcmData[i] = floatInputBuffer.get(i);
+                }
+                return pcmData;
             }
-
-            for (int i = 0; i < CHUNK_TO_READ * CHUNK_SIZE; ++i) {
-                floatInputBuffer[i] = recordingBuffer[i] / (float)Short.MAX_VALUE;
-            }
-
-            final String result = detect(floatInputBuffer);
-            if (result.length() > 0)
-//                all_result = String.format("%s %s", all_result, result);
-                all_result = result;
-
-            chunkToRead = CHUNK_TO_READ - 1;
-            recordingOffset = CHUNK_SIZE;
-            System.arraycopy(recordingBuffer, chunkToRead * CHUNK_SIZE, recordingBuffer, 0, CHUNK_SIZE);
-
-            updateVisualizer(audioBuffer);
-
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            extractor.release();
         }
-
-        record.stop();
-        showTranslationResult("");
-        record.release();
+        return null;
     }
 
-    private String detect(double[] inputBuffer) {
+    // 오디오 트랙을 찾는 메서드
+    private int findAudioTrack(MediaExtractor extractor) {
+        int numTracks = extractor.getTrackCount();
+        for (int i = 0; i < numTracks; i++) {
+            MediaFormat format = extractor.getTrackFormat(i);
+            Log.d("DEBUG", "Track format: " + format);
+            int sampleRate = 0;
+            try {
+                sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            } catch (NullPointerException e) {
+                Log.e("DEBUG", "Sample rate not found in MediaFormat");
+            }
+            Log.d("DEBUG", "SampleRate: " + sampleRate);
+
+            if (sampleRate == 0) {
+                Log.e("DEBUG", "Sample rate not found in MediaFormat");
+            }
+            Log.d("DEBUG", "SampleRate: " + sampleRate);
+
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            if (mime.startsWith("audio/")) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private String detect(float[] pcmData) {
         FloatBuffer inTensorBuffer = Tensor.allocateFloatBuffer(INPUT_SIZE);
-        for (int i = 0; i < inputBuffer.length - 1; i++) {
-            inTensorBuffer.put((float) inputBuffer[i]);
+        for (int i = 0; i < INPUT_SIZE; i++) {
+            inTensorBuffer.put(pcmData[i]);
         }
 
-        final Tensor inTensor = Tensor.fromBlob(inTensorBuffer, new long[]{INPUT_SIZE});
+        final Tensor inTensor = Tensor.fromBlob(inTensorBuffer, new long[]{1, INPUT_SIZE});
         final long startTime = SystemClock.elapsedRealtime();
         IValue[] outputTuple;
 
         final float score = aasistModule.forward(IValue.from(inTensor)).toTensor().getDataAsFloatArray()[0];
         Log.d(SCORE_TAG, "score=" + score);
 
-
         final long inferenceTime = SystemClock.elapsedRealtime() - startTime;
         Log.d(TAG, "inference time (ms): " + inferenceTime);
 
-        @SuppressLint("DefaultLocale") final String transcript = "FAKE (" + String.format("%.2g", score * 100) + "%)";
+        @SuppressLint("DefaultLocale") final String transcript = "FAKE (" + String.format("%.2f", score * 100) + "%)";
 
         Log.d(SCORE_TAG, "transcript=" + transcript);
 
         return transcript;
     }
+
 }
+
