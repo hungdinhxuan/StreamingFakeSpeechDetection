@@ -12,21 +12,21 @@
         android:id="@+id/btnRecognize"
         android:layout_width="340dp"
         android:layout_height="100dp"
-        android:layout_marginTop="200dp"
-        android:text="Start"
+        android:layout_marginTop="112dp"
+        android:fontFamily="sans-serif-light"
+        android:text="Select Audio File"
         android:textAllCaps="false"
         android:textSize="34sp"
-        android:fontFamily="sans-serif-light"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.51"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
 
     <TextView
         android:id="@+id/tvResult"
         android:layout_width="350dp"
         android:layout_height="200dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="108dp"
         android:fontFamily="sans-serif-light"
         android:gravity="center"
         android:hint=""
@@ -38,16 +38,5 @@
         app:layout_constraintHorizontal_bias="0.491"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnRecognize" />
-
-    <org.pytorch.demo.streamingfakespeechdetection.VisualizerView
-        android:id="@+id/visualizerView"
-        android:layout_width="0dp"
-        android:layout_height="200dp"
-        android:layout_marginTop="232dp"
-        android:background="#cccccc"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnRecognize" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
