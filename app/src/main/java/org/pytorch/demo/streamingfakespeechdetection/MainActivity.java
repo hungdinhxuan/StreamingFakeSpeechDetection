@@ -1,6 +1,6 @@
 package org.pytorch.demo.streamingfakespeechdetection;
 
-        import android.Manifest;
+        import  android.Manifest;
         import android.annotation.SuppressLint;
         import android.content.Context;
         import android.content.pm.PackageManager;
@@ -9,6 +9,7 @@ package org.pytorch.demo.streamingfakespeechdetection;
         import android.media.MediaFormat;
         import android.net.Uri;
         import android.content.Intent;
+        import android.os.AsyncTask;
         import android.os.Build;
         import android.os.Bundle;
         import android.os.Handler;
@@ -16,8 +17,11 @@ package org.pytorch.demo.streamingfakespeechdetection;
         import android.os.SystemClock;
         import android.util.Log;
         import android.widget.Button;
+        import android.widget.ProgressBar;
         import android.widget.TextView;
         import android.widget.Toast;
+        import android.view.View;
+        import android.widget.ProgressBar;
 
         import androidx.activity.result.ActivityResultLauncher;
         import androidx.activity.result.contract.ActivityResultContracts;
@@ -37,6 +41,10 @@ package org.pytorch.demo.streamingfakespeechdetection;
         import java.nio.FloatBuffer;
         import java.nio.file.Files;
         import java.util.ArrayList;
+        import java.util.concurrent.ExecutionException;
+        import java.util.concurrent.ExecutorService;
+        import java.util.concurrent.Executors;
+        import java.util.concurrent.Future;
 
 public class MainActivity extends AppCompatActivity{
     private static final String TAG = MainActivity.class.getName();
@@ -54,11 +62,14 @@ public class MainActivity extends AppCompatActivity{
     private ActivityResultLauncher<String> mGetContent;
     private Integer format;
 
+
+    private ProgressBar mProgressBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mProgressBar = findViewById(R.id.progressBar);
         handler = new Handler(Looper.getMainLooper());
 
         mButton = findViewById(R.id.btnRecognize); // select file
@@ -142,13 +153,35 @@ public class MainActivity extends AppCompatActivity{
     }
 
     // 오디오 파일을 처리하는 메서드
+//    private void processAndShowResult(Uri audioUri) {
+//        handler.post(() -> mProgressBar.setVisibility(View.VISIBLE));
+//
+//        float[] pcmData = processAudioFile(audioUri);
+//        if (pcmData != null) {
+//            String result = detect(pcmData);
+//            showTranslationResult(result);
+//            handler.post(() -> mProgressBar.setVisibility(View.GONE));
+//        }
+//    }
     private void processAndShowResult(Uri audioUri) {
-        float[] pcmData = processAudioFile(audioUri);
-        if (pcmData != null) {
+        // 처리 시작 전에 ProgressBar를 보여줍니다.
+        handler.post(() -> mProgressBar.setVisibility(View.VISIBLE));
+
+        // 오디오 파일 처리 코드를 백그라운드에서 실행합니다.
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> {
+            // 오디오 파일을 처리합니다.
+            float[] pcmData = processAudioFile(audioUri);
             String result = detect(pcmData);
-            showTranslationResult(result);
-        }
+
+            // 처리 작업이 완료되면 ProgressBar를 숨기고, 결과를 보여줍니다.
+            handler.post(() -> {
+                mProgressBar.setVisibility(View.GONE);
+                showTranslationResult(result);  // 결과를 보여주는 메서드. 이 부분은 실제 코드에 맞게 수정해야 합니다.
+            });
+        });
     }
+
     private float[] processAudioFile(Uri audioUri) {
         MediaExtractor extractor = new MediaExtractor();
         ArrayList<Float> floatInputBuffer = new ArrayList<>();
