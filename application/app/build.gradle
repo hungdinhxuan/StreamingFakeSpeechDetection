@@ -1,0 +1,38 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.yakovlevegor.DroidRec'
+
+    compileSdkVersion 34
+
+    buildToolsVersion "34.0.0"
+
+    defaultConfig {
+
+        applicationId 'com.yakovlevegor.DroidRec'
+
+        minSdk 28
+
+        targetSdk 34
+
+        versionCode 27
+
+        versionName "3.6"
+    }
+
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.9.0'
+    implementation 'androidx.preference:preference:1.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'org.greenrobot:eventbus:3.3.1'
+    implementation 'org.pytorch:pytorch_android_lite:2.1.0'
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:all"
+}
