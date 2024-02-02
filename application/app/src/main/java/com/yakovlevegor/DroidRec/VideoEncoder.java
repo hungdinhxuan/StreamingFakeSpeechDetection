@@ -38,7 +38,7 @@ import android.os.Looper;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
+//비디오 인코딩
 class VideoEncoder implements Encoder {
     private Surface mSurface;
 

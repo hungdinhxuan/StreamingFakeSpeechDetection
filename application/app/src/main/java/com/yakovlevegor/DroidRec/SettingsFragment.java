@@ -48,13 +48,13 @@ import android.view.Window;
 import android.content.SharedPreferences;
 
 import com.yakovlevegor.DroidRec.R;
-
+// 앱 설정 화면
 public class SettingsFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         PreferenceManager manager = getPreferenceManager();
-        manager.setSharedPreferencesName(ScreenRecorder.prefsident);
+        //manager.setSharedPreferencesName(ScreenRecorder.prefsident);
 
         setPreferencesFromResource(R.xml.settings, rootKey);
 

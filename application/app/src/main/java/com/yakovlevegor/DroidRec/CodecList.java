@@ -35,7 +35,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 
 import java.util.ArrayList;
-
+// 오디오 코덱 목록 선택
 public class CodecList extends ListPreference {
 
     private ArrayList<String> codecsList = new ArrayList<String>();

@@ -60,7 +60,7 @@ import android.os.SystemClock;
 import android.hardware.display.DisplayManager;
 
 import com.yakovlevegor.DroidRec.R;
-
+// 패널위치 조정 코드
 @TargetApi(Build.VERSION_CODES.O)
 public class FloatingControls extends Service {
 

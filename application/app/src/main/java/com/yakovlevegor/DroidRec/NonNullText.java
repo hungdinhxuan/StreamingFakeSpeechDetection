@@ -39,7 +39,7 @@ import android.text.TextWatcher;
 import android.text.InputType;
 
 import com.yakovlevegor.DroidRec.R;
-
+// 환경 설정에서 입력 받는 값을 검증하고 관리하는데 사용
 public class NonNullText extends EditTextPreference {
 
     private EditText textEdit;
@@ -60,7 +60,7 @@ public class NonNullText extends EditTextPreference {
 
             persistedString = NonNullText.this.getPersistedString(defaultString);
             editText.addTextChangedListener(new InputValidator());
-
+            // 0으로 시작하거나 비어있으면 default값으로 변경
             if (persistedString.startsWith("0") || persistedString.contentEquals("")) {
                  persistString(defaultString);
                  persistedString = defaultString;

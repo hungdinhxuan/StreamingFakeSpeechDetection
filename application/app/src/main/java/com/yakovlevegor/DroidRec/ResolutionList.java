@@ -36,7 +36,7 @@ import android.hardware.display.DisplayManager;
 import android.view.Surface;
 
 import java.util.ArrayList;
-
+// 기기의 디스플레이해상도 동적 설정
 public class ResolutionList extends ListPreference {
 
     private ArrayList<String> resolutionsList = new ArrayList<String>();

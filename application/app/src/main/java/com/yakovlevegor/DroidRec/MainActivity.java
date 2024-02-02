@@ -1595,7 +1595,9 @@ public class MainActivity extends AppCompatActivity {
                 ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
                 audioProcessor.setExecutor(executor);
             }
-            audioProcessor.run();
+            if (audioProcessor != null) {
+                audioProcessor.run();
+            }
         }
 
         void recordingStop() {
@@ -1662,9 +1664,8 @@ public class MainActivity extends AppCompatActivity {
             recordStop.setVisibility(View.GONE);
 
             recordingState = MainButtonActionState.RECORDING_IN_PROGRESS;
-            if (audioProcessor != null) {
-                audioProcessor.run();
-            }
+            if (audioProcessor != null) audioProcessor.resume();
+
         }
 
         void recordingReset() {
@@ -1673,6 +1674,13 @@ public class MainActivity extends AppCompatActivity {
             modesPanel.setVisibility(View.VISIBLE);
 
             transitionToButtonState(MainButtonState.TRANSITION_TO_RESTART);
+            if (audioProcessor != null) {
+                audioProcessor.stop();  // 먼저 AudioProcessor를 중지합니다.
+                audioProcessor = null;  // 그리고 AudioProcessor 객체를 null로 설정하여 GC가 제거하도록 합니다.
+            }
+
+            // 모델 초기화 (필요한 경우)
+            //aasistModule = LiteModuleLoader.load(assetFilePath(getApplicationContext(), "btsdetect_cnn_1s.ptl"));
         }
 
         void resetDir(boolean isAudio) {
@@ -1842,11 +1850,13 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = getString(R.string.channel_name);
             String description = getString(R.string.channel_description);
-            NotificationChannel channel = new NotificationChannel("notify", name, NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_HIGH);
             channel.setDescription(description);
             channel.setBypassDnd(true);  // '방해 금지' 모드를 우회
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+            }
         }
         ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
         display = ((DisplayManager)(getBaseContext().getSystemService(Context.DISPLAY_SERVICE))).getDisplay(Display.DEFAULT_DISPLAY);

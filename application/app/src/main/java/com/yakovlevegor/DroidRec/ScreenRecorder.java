@@ -369,12 +369,12 @@ public class ScreenRecorder extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         if (intent != null) {
-            if (intent.getAction() == ACTION_START || intent.getAction() == ACTION_START_NOVIDEO) {
-//                recordOnlyAudio = false;
+            if (intent.getAction() == ACTION_START) {
+                recordOnlyAudio = false;
                 actionStart();
-//            } else if (intent.getAction() == ACTION_START_NOVIDEO) {
-//                recordOnlyAudio = true;
-//                actionStart();
+            } else if (intent.getAction() == ACTION_START_NOVIDEO) {
+                recordOnlyAudio = true;
+                actionStart();
             } else if (intent.getAction() == ACTION_STOP) {
                 screenRecordingStop();
             } else if (intent.getAction() == ACTION_PAUSE) {
@@ -437,12 +437,12 @@ public class ScreenRecorder extends Service {
                 try {
                     customSampleRate = Integer.parseInt(customSampleRateValueString);
                 } catch (NumberFormatException exception) {
-                    customSampleRate = 16000;
+                    customSampleRate = 44100;
                 }
             }
 
         } else {
-            customSampleRate = 16000;
+            customSampleRate = 44100;
 
             String sampleRateValue = ((AudioManager)getSystemService(Context.AUDIO_SERVICE)).getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
 
@@ -450,11 +450,11 @@ public class ScreenRecorder extends Service {
                 if (sampleRateValue.length() < 10) {
                     try {
                         int newSampleRate = Integer.parseInt(sampleRateValue);
-                        if (newSampleRate > 16000 && newSampleRate >= 48000) {
+                        if (newSampleRate > 44100 && newSampleRate >= 48000) {
                             customSampleRate = 48000;
                         }
                     } catch (NumberFormatException exception) {
-                        customSampleRate = 16000;
+                        customSampleRate = 44100;
                     }
                 }
             }
@@ -1012,13 +1012,15 @@ public class ScreenRecorder extends Service {
         } else {
             if (recorderPlayback != null) {
                 recorderPlayback.quit();
-                try {
-                    recordingOpenFileDescriptor.close();
-                } catch (IOException e) {
-                    Toast.makeText(this, R.string.error_recorder_failed, Toast.LENGTH_SHORT).show();
+                if (recordingOpenFileDescriptor != null) {
+                    try {
+                        recordingOpenFileDescriptor.close();
+                    } catch (IOException e) {
+                        Toast.makeText(this, R.string.error_recorder_failed, Toast.LENGTH_SHORT).show();
+                    }
                 }
-
             }
+
         }
 
         finishedFile = recordFile;

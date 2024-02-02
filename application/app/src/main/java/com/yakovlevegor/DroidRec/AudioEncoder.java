@@ -36,9 +36,9 @@ import android.os.Bundle;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
+// 오디오 데이터 인코딩
+// 녹음된 오디오를 mp4형태로 저장하기 위함
 class AudioEncoder implements Encoder {
-
     private int sampleRate = 44100;
 
     private int channelsCount = 2;

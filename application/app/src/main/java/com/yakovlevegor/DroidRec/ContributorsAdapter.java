@@ -40,7 +40,7 @@ import android.net.Uri;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.yakovlevegor.DroidRec.R;
-
+// 기여자 명단
 public class ContributorsAdapter extends RecyclerView.Adapter<ContributorsAdapter.ViewHolder> {
 
     private Context mainContext;

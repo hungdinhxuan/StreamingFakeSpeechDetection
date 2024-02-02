@@ -33,7 +33,7 @@ import androidx.preference.PreferenceManager;
 import android.os.Bundle;
 
 import com.yakovlevegor.DroidRec.R;
-
+//사용자 설정 화면을 만드는 코드
 public class AudioSourcesSettingsFragment extends PreferenceFragmentCompat {
 
     @Override

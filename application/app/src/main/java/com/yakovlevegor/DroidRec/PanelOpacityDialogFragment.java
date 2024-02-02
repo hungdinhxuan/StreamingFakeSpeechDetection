@@ -41,7 +41,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import com.yakovlevegor.DroidRec.R;
-
+// 패널 투명도를 설정할 수 있는 다이얼로그 제공
 public class PanelOpacityDialogFragment extends PreferenceDialogFragmentCompat {
 
     public static final String SAVE_STATE_VALUE = "PanelOpacityDialogFragment.value";

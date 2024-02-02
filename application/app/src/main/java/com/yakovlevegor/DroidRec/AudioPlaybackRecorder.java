@@ -51,7 +51,7 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.SecurityException;
-
+// 오디오 녹음 및 인코딩
 class AudioPlaybackRecorder implements Encoder {
     private static final String TAG = AudioPlaybackRecorder.class.getSimpleName();
 
@@ -82,6 +82,7 @@ class AudioPlaybackRecorder implements Encoder {
     private boolean sourceGame = false;
     private boolean sourceUnknown = false;
 
+    // 생성자 코드
     AudioPlaybackRecorder(boolean microphone, boolean audio, int audioRate, int channels, MediaProjection playbackProjection, boolean useCustomCodec, String customCodec, Context ctx, boolean recordMedia, boolean recordGame, boolean recordUnknown) {
         mEncoder = new AudioEncoder(audioRate, channels, useCustomCodec, customCodec);
         mSampleRate = audioRate;
@@ -99,15 +100,15 @@ class AudioPlaybackRecorder implements Encoder {
         sourceGame = recordGame;
         sourceUnknown = recordUnknown;
     }
-
+    //외부에서 전달받은 callback을 설정. 오디오 녹음 및 재생의 상태 변경 등의 이벤트에 대응하기 위해 사용
     public void setCallback(Callback callback) {
         this.mCallback = (AudioEncoder.Callback) callback;
     }
-
+    // 오디오 인코더의 콜백을 설정하는 메서드. 오디오 인코딩의 상태 변경 등의 이벤트에 대응하기 위해 사용
     public void setCallback(AudioEncoder.Callback callback) {
         this.mCallback = callback;
     }
-
+    // 녹음을 준비하는 메서드
     public void prepare() throws IOException {
         Looper myLooper = Looper.myLooper();
         mCallbackDelegate = new CallbackDelegate(myLooper, mCallback);
@@ -115,7 +116,7 @@ class AudioPlaybackRecorder implements Encoder {
         mRecordHandler = new RecordHandler(mRecordThread.getLooper());
         mRecordHandler.sendEmptyMessage(MSG_PREPARE);
     }
-
+    // 녹음 중단 메서드. 콜백 대리자와 모든 콜백 메세지 제거
     public void stop() {
         if (mCallbackDelegate != null) {
             mCallbackDelegate.removeCallbacksAndMessages(null);
@@ -123,29 +124,29 @@ class AudioPlaybackRecorder implements Encoder {
         mForceStop.set(true);
         if (mRecordHandler != null) mRecordHandler.sendEmptyMessage(MSG_STOP);
     }
-
+    // 녹음 쓰레드 종료
     public void release() {
         if (mRecordHandler != null) mRecordHandler.sendEmptyMessage(MSG_RELEASE);
         mRecordThread.quitSafely();
     }
-
+    // 지정된 인덱스의 출력 버퍼를 해제하는 메서드.
     void releaseOutputBuffer(int index) {
         Message.obtain(mRecordHandler, MSG_RELEASE_OUTPUT, index, 0).sendToTarget();
     }
-
+    // 지정돈 인덱스의 출력버퍼를 가져오는 메서드
     ByteBuffer getOutputBuffer(int index) {
         return mEncoder.getOutputBuffer(index);
     }
 
     private static class CallbackDelegate extends Handler {
         private AudioEncoder.Callback mCallback;
-
+        // 생성자
         CallbackDelegate(Looper l, AudioEncoder.Callback callback) {
             super(l);
             this.mCallback = callback;
         }
 
-
+        // 인코딩 과정에서 오류 시 처리
         void onError(Encoder encoder, Exception exception) {
             Message.obtain(this, new Runnable() {
                 public void run() {
@@ -155,7 +156,7 @@ class AudioPlaybackRecorder implements Encoder {
                 }
             }).sendToTarget();
         }
-
+        // 출력 형식이 변경되면 처리하는 메서드
         void onOutputFormatChanged(AudioEncoder encoder, MediaFormat format) {
              Message.obtain(this, new Runnable() {
                 public void run() {
@@ -165,7 +166,7 @@ class AudioPlaybackRecorder implements Encoder {
                 }
             }).sendToTarget();
         }
-
+        // 출력 버퍼가 사용 가능해지면 이를 처리하는 메서드
         void onOutputBufferAvailable(AudioEncoder encoder, int index, MediaCodec.BufferInfo info) {
               Message.obtain(this, new Runnable() {
                 public void run() {
@@ -185,6 +186,7 @@ class AudioPlaybackRecorder implements Encoder {
     private static final int MSG_STOP = 4;
     private static final int MSG_RELEASE = 5;
 
+    // 오디오 녹음 및 재생과 관련된 메세지를 처리하는 클래스
     private class RecordHandler extends Handler {
         private LinkedList<MediaCodec.BufferInfo> mCachedInfos = new LinkedList<>();
         private LinkedList<Integer> mMuxingOutputBufferIndices = new LinkedList<>();
@@ -193,7 +195,7 @@ class AudioPlaybackRecorder implements Encoder {
         RecordHandler(Looper l) {
             super(l);
         }
-
+        // 전달받은 메세지를 처리하는 역할
         @Override
         public void handleMessage(Message msg) {
             if (msg.what == MSG_PREPARE) {
@@ -367,9 +369,10 @@ class AudioPlaybackRecorder implements Encoder {
         return currentUs;
     }
 
+    // 오디오 녹음에 필요한 설정을 구성하고 이를 바탕으로 AudioRecord 객체를 생성하는 역할을 한다.
     @TargetApi(Build.VERSION_CODES.Q)
     private AudioRecord createAudioRecord(int sampleRateInHz, int channelConfig, int audioFormat, MediaProjection captureProjection) {
-        AudioFormat captureAudioFormat = new AudioFormat.Builder()
+        AudioFormat captureAudioFormat = new AudioFormat.Builder() // 오디오 녹음에 사용할 객체 생성
             .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
             .setSampleRate(sampleRateInHz)
             .setChannelMask(channelConfig)
@@ -413,7 +416,7 @@ class AudioPlaybackRecorder implements Encoder {
         }
         return record;
     }
-
+    // 마이크를 통한 녹음
     private static AudioRecord createMicRecord(int sampleRateInHz, int channelConfig, int audioFormat) {
         AudioRecord record = null;
 

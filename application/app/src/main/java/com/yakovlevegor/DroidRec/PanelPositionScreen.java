@@ -26,7 +26,7 @@
 */
 
 package com.yakovlevegor.DroidRec;
-
+// 패널 위치를 설정하고 저장하는 기능
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.View;

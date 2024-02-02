@@ -24,7 +24,8 @@
  *
  * For more information, please refer to <http://unlicense.org/>
 */
-
+// 어플리케이션 정보를 불러오는 코드
+// 어플 설정 불러오기, 테마 설정, 라이센스, 기여자, 앱버전
 package com.yakovlevegor.DroidRec;
 
 import android.annotation.TargetApi;

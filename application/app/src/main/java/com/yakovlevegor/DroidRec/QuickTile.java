@@ -37,7 +37,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.Build;
 import android.annotation.TargetApi;
-
+// 화면 녹화를 제어
 @TargetApi(Build.VERSION_CODES.N)
 public class QuickTile extends TileService {
 
