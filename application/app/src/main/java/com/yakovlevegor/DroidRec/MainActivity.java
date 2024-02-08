@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * For more information, please refer to <http://unlicense.org/>
-*/
+ */
 
 package com.yakovlevegor.DroidRec;
 
@@ -31,10 +31,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -112,7 +110,6 @@ import org.greenrobot.eventbus.Subscribe;
 
 import org.pytorch.IValue;
 import org.pytorch.Module;
-import org.pytorch.LiteModuleLoader;
 import org.pytorch.Tensor;
 
 
@@ -1582,11 +1579,7 @@ public class MainActivity extends AppCompatActivity {
 
                 transitionToButtonState(MainButtonState.WHILE_RECORDING_NORMAL);
             }
-            if (aasistModule == null) {
-                System.out.println("Loading model...");
-                aasistModule = LiteModuleLoader.load(assetFilePath(getApplicationContext(), "btsdetect_cnn_1s.ptl"));
-                System.out.println("Loaded model aasistModule");
-            }
+
             if (audioProcessor == null) {
                 ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
                 audioProcessor = new AudioProcessor(aasistModule, executor, getApplicationContext());
@@ -1857,6 +1850,11 @@ public class MainActivity extends AppCompatActivity {
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(channel);
             }
+        }
+        if (aasistModule == null) {
+            System.out.println("Loading model...");
+            aasistModule = Module.load(assetFilePath(getApplicationContext(), "W2V2BASE_AASISTL_SelfKD_KDLoss_Without_teacher_best_checkpoint_126.pt"));
+            System.out.println("Loaded model aasistModule");
         }
         ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
         display = ((DisplayManager)(getBaseContext().getSystemService(Context.DISPLAY_SERVICE))).getDisplay(Display.DEFAULT_DISPLAY);
@@ -2841,46 +2839,46 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-            if (requestCode == REQUEST_MICROPHONE) {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    appSettingsEditor.putBoolean("checksoundmic", true);
-                    appSettingsEditor.commit();
-                } else {
-                    Toast.makeText(this, R.string.error_audio_required, Toast.LENGTH_SHORT).show();
-                }
-            } else if (requestCode == REQUEST_MICROPHONE_PLAYBACK) {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    appSettingsEditor.putBoolean("checksoundplayback", true);
-                    appSettingsEditor.commit();
-                } else {
-                    Toast.makeText(this, R.string.error_audio_required, Toast.LENGTH_SHORT).show();
-                }
-            } else if (requestCode == REQUEST_MICROPHONE_RECORD) {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    checkDirRecord(appSettings.getBoolean("recordmode", false));
-                } else {
-                    Toast.makeText(this, R.string.error_audio_required, Toast.LENGTH_SHORT).show();
-                }
-            } else if (requestCode == REQUEST_STORAGE) {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    checkDirRecord(false);
-                } else {
-                    Toast.makeText(this, R.string.error_storage_required, Toast.LENGTH_SHORT).show();
-                }
-            } else if (requestCode == REQUEST_STORAGE_AUDIO) {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    checkDirRecord(true);
-                } else {
-                    Toast.makeText(this, R.string.error_storage_required, Toast.LENGTH_SHORT).show();
-                }
-            } else if (requestCode == REQUEST_MODE_CHANGE) {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    setRecordMode(true);
-                } else {
-                    Toast.makeText(this, R.string.error_audio_required, Toast.LENGTH_SHORT).show();
-                }
+        if (requestCode == REQUEST_MICROPHONE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                appSettingsEditor.putBoolean("checksoundmic", true);
+                appSettingsEditor.commit();
+            } else {
+                Toast.makeText(this, R.string.error_audio_required, Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_MICROPHONE_PLAYBACK) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                appSettingsEditor.putBoolean("checksoundplayback", true);
+                appSettingsEditor.commit();
+            } else {
+                Toast.makeText(this, R.string.error_audio_required, Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_MICROPHONE_RECORD) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                checkDirRecord(appSettings.getBoolean("recordmode", false));
+            } else {
+                Toast.makeText(this, R.string.error_audio_required, Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_STORAGE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                checkDirRecord(false);
+            } else {
+                Toast.makeText(this, R.string.error_storage_required, Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_STORAGE_AUDIO) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                checkDirRecord(true);
+            } else {
+                Toast.makeText(this, R.string.error_storage_required, Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_MODE_CHANGE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                setRecordMode(true);
+            } else {
+                Toast.makeText(this, R.string.error_audio_required, Toast.LENGTH_SHORT).show();
             }
         }
+    }
     @Override
     protected void onResume() {
         if (onShakeEventHelper != null && onShakeEventHelper.hasListenerChanged()) {
@@ -2888,9 +2886,9 @@ public class MainActivity extends AppCompatActivity {
             onShakeEventHelper.registerListener();
         }
         super.onResume();
-        if (audioProcessor != null) { // NullPointerException 방지
-            audioProcessor.run();
-        }
+//        if (audioProcessor != null) { // NullPointerException 방지
+//            audioProcessor.run();
+//        }
     }
 
     @Subscribe

@@ -118,13 +118,14 @@ public class AudioProcessor {
         Log.d(TAG, "run method started");
         // 배열의 길이를 가져옵니다.
         FloatBuffer inTensorBuffer = Tensor.allocateFloatBuffer(INPUT_SIZE);
+        Log.d(TAG, "inputBuffer: " + inputBuffer);
         for (int i = 0; i < inputBuffer.length - 1; i++) {
             inTensorBuffer.put((float) inputBuffer[i]);
         }
 
         final Tensor inTensor = Tensor.fromBlob(inTensorBuffer, new long[]{INPUT_SIZE});
         final long startTime = SystemClock.elapsedRealtime();
-        //IValue[] outputTuple;
+        IValue[] outputTuple;
 
         final float score = aasistModule.forward(IValue.from(inTensor)).toTensor().getDataAsFloatArray()[0];
         Log.d(SCORE_TAG, "score=" + score);
@@ -138,7 +139,7 @@ public class AudioProcessor {
         final long inferenceTime = SystemClock.elapsedRealtime() - startTime;
         Log.d(TAG, "inference time (ms): " + inferenceTime);
 
-        @SuppressLint("DefaultLocale") final String transcript = "FAKE (" + String.format("%.2g", score * 100) + "%)";
+        @SuppressLint("DefaultLocale") final String transcript = "FAKE (" + String.format("%.4g", score * 100) + "%)";
 
         Log.d(SCORE_TAG, "transcript=" + transcript);
 
