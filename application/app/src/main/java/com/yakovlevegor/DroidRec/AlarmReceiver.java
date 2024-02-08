@@ -11,7 +11,7 @@ import androidx.core.app.NotificationManagerCompat;
 public class AlarmReceiver {
     private static final String CHANNEL_ID = "notify";
 
-    public static void createNotification(Context context) {
+    public static void createNotification(Context context, String transcript) {
         Intent intent = new Intent(context, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -20,7 +20,7 @@ public class AlarmReceiver {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.icons8_box_important_48)  // 알림 아이콘 설정
                 .setContentTitle("Fake Detect!!")  // 알림 제목 설정
-                .setContentText("Your audio is fake.")  // 알림 내용 설정
+                .setContentText(transcript)  // 알림 내용 설정
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setContentIntent(pendingIntent)  // 알림 클릭 시 이동할 Intent 설정

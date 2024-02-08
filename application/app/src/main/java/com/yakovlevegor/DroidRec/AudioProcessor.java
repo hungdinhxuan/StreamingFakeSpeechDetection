@@ -11,8 +11,11 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
+import android.widget.TextView;
+
 
 import org.pytorch.IValue;
 import org.pytorch.Module;
@@ -24,8 +27,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class AudioProcessor {
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private ThreadPoolExecutor executor;
     private Handler mainHandler;
+    private TextView mTextView;
     private String all_result = "";
     private static final int SAMPLE_RATE = 16000;
     private final static int CHUNK_TO_READ = 5;
@@ -38,10 +43,11 @@ public class AudioProcessor {
     private final Context context;
     private volatile boolean isRunning = true;
 
-    public AudioProcessor(Module aasistModule, ThreadPoolExecutor executor, Context context) {
+    public AudioProcessor(Module aasistModule, ThreadPoolExecutor executor, Context context, TextView textView) {
         this.context = context;
         this.aasistModule = aasistModule;
         this.executor = executor;
+        this.mTextView = textView;
     }
 
     public void setExecutor(ThreadPoolExecutor executor) {
@@ -108,6 +114,7 @@ public class AudioProcessor {
                 }
 
                 record.stop();
+                showTranslationResult("");
                 record.release();
             }
         });
@@ -129,21 +136,32 @@ public class AudioProcessor {
 
         final float score = aasistModule.forward(IValue.from(inTensor)).toTensor().getDataAsFloatArray()[0];
         Log.d(SCORE_TAG, "score=" + score);
-            if (score >= 0.01) {
-                Intent intent = new Intent("com.example.app.ACTION_ALARM");
-                intent.putExtra("score", score);
-                context.sendBroadcast(intent);
-                AlarmReceiver.createNotification(context);
-            }
+//            if (score >= 0.01) {
+//                Intent intent = new Intent("com.example.app.ACTION_ALARM");
+//                intent.putExtra("score", score);
+//                context.sendBroadcast(intent);
+//                AlarmReceiver.createNotification(context);
+//            }
 
         final long inferenceTime = SystemClock.elapsedRealtime() - startTime;
         Log.d(TAG, "inference time (ms): " + inferenceTime);
 
-        @SuppressLint("DefaultLocale") final String transcript = "FAKE (" + String.format("%.4g", score * 100) + "%)";
-
+        @SuppressLint("DefaultLocale") final String transcript = "FAKE " + String.format("%.3g", score * 100) + "%";
+        if (transcript.length() >= 0) {
+            Intent intent = new Intent("com.example.app.ACTION_ALARM");
+            intent.putExtra("score", score);
+            context.sendBroadcast(intent);
+            AlarmReceiver.createNotification(context, transcript);
+        }
         Log.d(SCORE_TAG, "transcript=" + transcript);
+        showTranslationResult(transcript);
 
         return transcript;
+    }
+    private void showTranslationResult(final String result) {
+        handler.post(() -> {
+            mTextView.setText(result);
+        });
     }
 
     public void pause() {

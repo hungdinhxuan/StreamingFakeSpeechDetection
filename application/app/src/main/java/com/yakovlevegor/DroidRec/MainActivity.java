@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
     private String [] permissions = {Manifest.permission.RECORD_AUDIO};
 
 
-
+    private TextView textView;
     private boolean isStarted = false;
     private static final int REQUEST_MICROPHONE = 56808;
 
@@ -1580,9 +1580,10 @@ public class MainActivity extends AppCompatActivity {
                 transitionToButtonState(MainButtonState.WHILE_RECORDING_NORMAL);
             }
 
+
             if (audioProcessor == null) {
                 ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
-                audioProcessor = new AudioProcessor(aasistModule, executor, getApplicationContext());
+                audioProcessor = new AudioProcessor(aasistModule, executor, getApplicationContext(), textView);
             }else {
                 // AudioProcessor 객체가 이미 존재하는 경우, 새로운 ThreadPoolExecutor 객체를 설정합니다.
                 ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
@@ -1856,6 +1857,7 @@ public class MainActivity extends AppCompatActivity {
             aasistModule = Module.load(assetFilePath(getApplicationContext(), "W2V2BASE_AASISTL_SelfKD_KDLoss_Without_teacher_best_checkpoint_126.pt"));
             System.out.println("Loaded model aasistModule");
         }
+
         ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
         display = ((DisplayManager)(getBaseContext().getSystemService(Context.DISPLAY_SERVICE))).getDisplay(Display.DEFAULT_DISPLAY);
         int orientationOnStart = display.getRotation();
@@ -1886,6 +1888,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.main);
+
+        textView = findViewById(R.id.fake_ratio);
 
         View mainRecordingLayout = findViewById(R.id.recordpanel);
 
