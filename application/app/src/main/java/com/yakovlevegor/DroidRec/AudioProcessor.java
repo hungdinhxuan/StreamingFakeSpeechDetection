@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.MediaCodec;
 import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.Looper;
@@ -21,17 +22,30 @@ import org.pytorch.IValue;
 import org.pytorch.Module;
 import org.pytorch.Tensor;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class AudioProcessor {
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private AudioEncoder mEncoder;
     private ThreadPoolExecutor executor;
     private Handler mainHandler;
     private TextView mTextView;
     private String all_result = "";
+    private AudioPlaybackRecorder audioPlaybackRecorder;
+    private MediaCodec mediaCodec;
+    private long timeoutUs;
     private static final int SAMPLE_RATE = 16000;
     private final static int CHUNK_TO_READ = 5;
     private final static int CHUNK_SIZE = 12800;
@@ -39,9 +53,15 @@ public class AudioProcessor {
     //private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
     private AudioRecord audioRecord;
     private Thread processingThread;
+    private ByteBuffer newBuffer;
     private final Module aasistModule;
     private final Context context;
     private volatile boolean isRunning = true;
+    private ArrayList<Float> scores = new ArrayList<>();
+    int segmentIndex = 0;
+    private ByteBuffer buffer;
+    private int index;
+
 
     public AudioProcessor(Module aasistModule, ThreadPoolExecutor executor, Context context, TextView textView) {
         this.context = context;
@@ -50,22 +70,72 @@ public class AudioProcessor {
         this.mTextView = textView;
     }
 
+    private boolean allZero(short[] array) {
+        for (short value : array) {
+            if (value != 0) {
+                return false;
+            }
+        }
+        Log.d(TAG, "audiobuffer is all zero.");
+        return true;
+    }
+    public void setBuffer(ByteBuffer buffer) {
+        this.buffer = buffer;
+        ShortBuffer shortBuf = buffer.asShortBuffer();
+
+        // ShortBuffer를 short[] 배열로 변환합니다.
+        short[] array = new short[shortBuf.remaining()];
+        shortBuf.get(array);
+
+        // allZero() 메서드를 호출합니다.
+        if(allZero(array)) {
+            processBuffer();
+        }
+    }
+    private void processBuffer() {
+        if (buffer != null) {
+            // ByteBuffer에서 short 배열로 변환합니다.
+            ShortBuffer shortBuf = buffer.asShortBuffer();
+            short[] shortArray = new short[shortBuf.remaining()];
+            shortBuf.get(shortArray);
+
+            // 변환된 short 배열을 detect() 메서드에 전달합니다.
+            double[] doubleArray = new double[shortArray.length];
+            for (int i = 0; i < shortArray.length; i++) {
+                doubleArray[i] = shortArray[i] / (double) Short.MAX_VALUE;
+            }
+            String result = detect(doubleArray);
+            Log.d("DetectionResult", "result: " + result);
+        }
+    }
     public void setExecutor(ThreadPoolExecutor executor) {
         this.executor = executor;
     }
 
     public void run() {
         if (executor == null) {
-            executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
+            executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
         }
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 final int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+
                 @SuppressLint("MissingPermission") final AudioRecord record = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
                         bufferSize);
                 if (record.getState() != AudioRecord.STATE_INITIALIZED) {
                     Log.e(TAG, "Audio Record can't initialize!");
+                    return;
+                }
+
+                mEncoder = new AudioEncoder(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, false, "");
+                try {
+                    if (Looper.myLooper() == null) {
+                        Looper.prepare();
+                    }
+                    mEncoder.prepare();
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to prepare AudioEncoder", e);
                     return;
                 }
 
@@ -89,6 +159,7 @@ public class AudioProcessor {
                         // for every segment of 5 chunks of data, we perform transcription
                         // each successive segment’s first chunk is exactly the preceding segment’s last chunk
                         int numberOfShort = record.read(audioBuffer, 0, audioBuffer.length);
+                        //Log.d(TAG, "audioBuffer: " + Arrays.toString(audioBuffer));
                         shortsRead += numberOfShort;
                         int x = (int) (numberOfShort - (shortsRead - chunkToRead * CHUNK_SIZE));
                         if (shortsRead > chunkToRead * CHUNK_SIZE)
@@ -98,18 +169,82 @@ public class AudioProcessor {
 
                         recordingOffset += numberOfShort;
                     }
+                    File pcmFile = new File(context.getExternalFilesDir(null), "input.pcm");
+                    try (FileOutputStream fos = new FileOutputStream(pcmFile)) {
+                        ByteBuffer buffer = ByteBuffer.allocate(recordingBuffer.length * 2);
+                        buffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(recordingBuffer);
+                        fos.write(buffer.array());
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error writing PCM file", e);
+                    }
+
+
 
                     for (int i = 0; i < CHUNK_TO_READ * CHUNK_SIZE; ++i) {
                         floatInputBuffer[i] = recordingBuffer[i] / (float) Short.MAX_VALUE;
                     }
+                    //Log.d(TAG, "floatInputBuffer: " + Arrays.toString(floatInputBuffer));
 
-                    final String result = detect(floatInputBuffer);
-                    if (result.length() > 0)
-                        all_result = result;
+                    segmentIndex++;
 
+                    String result = "";
+                    if (!allZero(audioBuffer)) {
+                        Log.d(TAG, "audio buffer is not all zero");
+                        result = detect(floatInputBuffer);
+                        if (result.length() > 0)
+                            all_result = result;
+                    } else {
+                        MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+
+                        int index = mEncoder.mEncoder.dequeueOutputBuffer(bufferInfo, 1);
+                        while (audioPlaybackRecorder == null) {
+                            long startTime = System.currentTimeMillis();
+                            long waitTime = 5000;
+                            if (System.currentTimeMillis() - startTime > waitTime) {
+                                Log.e(TAG, "Waiting for audioPlaybackRecorder timed out");
+                                return;  // 대기 시간이 초과되면 메서드를 종료
+                            }
+
+                            try {
+                                Thread.sleep(100);  // 100밀리초 동안 대기
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();  // 현재 스레드의 인터럽트 상태를 설정
+                                return;  // 스레드가 인터럽트되었으므로 메서드를 종료
+                            }
+                        }
+                        ByteBuffer newBuffer = audioPlaybackRecorder.getOutputBuffer(index);
+
+                        // ByteBuffer를 FloatBuffer로 변환합니다.
+                        FloatBuffer floatBuf = newBuffer.asFloatBuffer();
+
+                        // FloatBuffer를 float[] 배열로 변환합니다.
+                        float[] newFloatArray = new float[floatBuf.remaining()];
+                        floatBuf.get(newFloatArray);
+
+                        // float[] 배열을 double[] 배열로 변환합니다.
+                        double[] newDoubleArray = new double[newFloatArray.length];
+                        for (int i = 0; i < newFloatArray.length; i++) {
+                            newDoubleArray[i] = newFloatArray[i];
+                        }
+
+                        // 새로운 배열로 detect() 메서드를 호출합니다.
+                        result = detect(newDoubleArray);
+                        if (result.length() > 0)
+                            all_result = result;
+                    }
+                    // PCM 파일을 WAV 파일로 변환
+                    String fileName = "EnvironmentalSound_mic&screenrecording_trial_5" + "_" + segmentIndex + "_" + result + ".wav";
+                    File wavFile = new File(context.getExternalFilesDir(null), fileName);
+                    try {
+                        WavEncoder.encodePcmToWav(pcmFile, wavFile, SAMPLE_RATE, 1, 16);
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error encoding PCM to WAV", e);
+                    }
                     chunkToRead = CHUNK_TO_READ - 1;
                     recordingOffset = CHUNK_SIZE;
-                        System.arraycopy(recordingBuffer, chunkToRead * CHUNK_SIZE, recordingBuffer, 0, CHUNK_SIZE);
+                    System.arraycopy(recordingBuffer, chunkToRead * CHUNK_SIZE, recordingBuffer, 0, CHUNK_SIZE);
+
+                    //Log.d(TAG, "recordingBuffer: " + Arrays.toString(recordingBuffer));
 
                 }
 
@@ -129,19 +264,13 @@ public class AudioProcessor {
         for (int i = 0; i < inputBuffer.length - 1; i++) {
             inTensorBuffer.put((float) inputBuffer[i]);
         }
-
         final Tensor inTensor = Tensor.fromBlob(inTensorBuffer, new long[]{INPUT_SIZE});
         final long startTime = SystemClock.elapsedRealtime();
-        IValue[] outputTuple;
+        //IValue[] outputTuple;
 
         final float score = aasistModule.forward(IValue.from(inTensor)).toTensor().getDataAsFloatArray()[0];
         Log.d(SCORE_TAG, "score=" + score);
-//            if (score >= 0.01) {
-//                Intent intent = new Intent("com.example.app.ACTION_ALARM");
-//                intent.putExtra("score", score);
-//                context.sendBroadcast(intent);
-//                AlarmReceiver.createNotification(context);
-//            }
+        scores.add(score);
 
         final long inferenceTime = SystemClock.elapsedRealtime() - startTime;
         Log.d(TAG, "inference time (ms): " + inferenceTime);
@@ -155,6 +284,19 @@ public class AudioProcessor {
         }
         Log.d(SCORE_TAG, "transcript=" + transcript);
         showTranslationResult(transcript);
+
+        // score 개수 세기
+        int countGreater = 0; // 0.5 이상인 score 개수
+        int countLess = 0; // 0.5 이하인 score 개수
+        for (Float s : scores) {
+            if (s >= 0.5) {
+                countGreater++;
+            } else {
+                countLess++;
+            }
+        }
+        Log.d("SCORE_COUNT", "0.5 이상: " + countGreater + ", 0.5 이하: " + countLess);
+
 
         return transcript;
     }

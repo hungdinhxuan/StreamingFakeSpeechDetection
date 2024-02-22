@@ -38,22 +38,35 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
+import android.util.Log;
 import android.util.SparseLongArray;
 import android.content.Context;
 import android.os.Build;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.media.AudioAttributes;
 import android.annotation.TargetApi;
 import android.media.AudioPlaybackCaptureConfiguration;
 
+import org.pytorch.Module;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.SecurityException;
 // 오디오 녹음 및 인코딩
 class AudioPlaybackRecorder implements Encoder {
     private static final String TAG = AudioPlaybackRecorder.class.getSimpleName();
+    private Module aasistModule;
+    private ThreadPoolExecutor executor;
+    private Context context;
+    private TextView textView;
+
+    // AudioProcessor의 인스턴스를 생성합니다.
+    private AudioProcessor audioProcessor = new AudioProcessor(aasistModule, executor, context, textView);
 
     private final AudioEncoder mEncoder;
     private final HandlerThread mRecordThread;
@@ -81,6 +94,7 @@ class AudioPlaybackRecorder implements Encoder {
     private boolean sourceMedia = false;
     private boolean sourceGame = false;
     private boolean sourceUnknown = false;
+    private ByteBuffer buffer;
 
     // 생성자 코드
     AudioPlaybackRecorder(boolean microphone, boolean audio, int audioRate, int channels, MediaProjection playbackProjection, boolean useCustomCodec, String customCodec, Context ctx, boolean recordMedia, boolean recordGame, boolean recordUnknown) {
@@ -135,8 +149,19 @@ class AudioPlaybackRecorder implements Encoder {
     }
     // 지정돈 인덱스의 출력버퍼를 가져오는 메서드
     ByteBuffer getOutputBuffer(int index) {
-        return mEncoder.getOutputBuffer(index);
+        ByteBuffer buffer = mEncoder.getOutputBuffer(index);
+        if (buffer != null) {
+            byte[] byteArray = new byte[buffer.remaining()];
+            buffer.get(byteArray);
+            byte[] firstTenBytes = Arrays.copyOfRange(byteArray, 0, Math.min(10, byteArray.length));
+            //Log.d("buffer", "audioBuffer: " + Arrays.toString(firstTenBytes));
+
+            // AudioProcessor에 버퍼의 내용을 전달합니다.
+            //audioProcessor.setBuffer(buffer);
+        }
+        return buffer;
     }
+
 
     private static class CallbackDelegate extends Handler {
         private AudioEncoder.Callback mCallback;

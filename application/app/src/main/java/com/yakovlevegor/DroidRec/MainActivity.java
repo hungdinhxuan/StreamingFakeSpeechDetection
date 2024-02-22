@@ -1854,7 +1854,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (aasistModule == null) {
             System.out.println("Loading model...");
-            aasistModule = Module.load(assetFilePath(getApplicationContext(), "W2V2BASE_AASISTL_SelfKD_KDLoss_Without_teacher_best_checkpoint_126.pt"));
+            aasistModule = Module.load(assetFilePath(getApplicationContext(), "W2V2BASE_AASISTL_DKDLoss_cnsl_audiomentations_3_v10_best63.pt"));
             System.out.println("Loaded model aasistModule");
         }
 
@@ -1952,12 +1952,12 @@ public class MainActivity extends AppCompatActivity {
             recordPlaybackStateDisabled = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_audio_disabled_dark, null);
 
 
-            recordInfoIcon = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_info_dark, null);
+            //recordInfoIcon = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_info_dark, null);
 
             recordSettingsIcon = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_settings_dark, null);
 
 
-            recordShareIcon = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_share_dark, null);
+            //recordShareIcon = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_share_dark, null);
 
             recordDeleteIcon = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_delete_dark, null);
 
@@ -2065,7 +2065,7 @@ public class MainActivity extends AppCompatActivity {
             recordPlaybackStateDisabled = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_audio_disabled, null);
 
 
-            recordInfoIcon = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_info, null);
+            //recordInfoIcon = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_info, null);
 
             recordSettingsIcon = VectorDrawableCompat.create(getResources(), R.drawable.icon_record_settings, null);
 
@@ -2662,15 +2662,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        recordSettings.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
-                releaseMainButtonFocus();
-
-                Intent showsettings = new Intent(MainActivity.this, SettingsPanel.class);
-                startActivity(showsettings);
-            }
-        });
+//        recordSettings.setOnClickListener(new View.OnClickListener() {
+//            public void onClick(View v) {
+//
+//                releaseMainButtonFocus();
+//
+//                //Intent showsettings = new Intent(MainActivity.this, SettingsPanel.class);
+//                startActivity(showsettings);
+//            }
+//        });
 
         EventBus.getDefault().register(this);
     }

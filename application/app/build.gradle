@@ -13,7 +13,7 @@ android {
 
         applicationId 'com.yakovlevegor.DroidRec'
 
-        minSdk 28
+        minSdkVersion 28
 
         targetSdk 34
 
@@ -33,8 +33,8 @@ dependencies {
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'org.greenrobot:eventbus:3.3.1'
     implementation 'org.pytorch:pytorch_android:2.1.0'
+    implementation 'org.greenrobot:eventbus:3.3.1'
 }
 
 tasks.withType(JavaCompile) {

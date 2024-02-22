@@ -27,7 +27,10 @@
 
 package com.yakovlevegor.DroidRec;
 
+import static androidx.core.app.ActivityCompat.startActivityForResult;
+
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
@@ -52,17 +55,22 @@ import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationChannelCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -77,6 +85,7 @@ import java.util.Calendar;
 import java.util.Locale;
 
 public class ScreenRecorder extends Service {
+    private static final int REQUEST_CODE = 1000;
     private AudioProcessor audioProcessor;
     private WindowManager windowManager;
 
@@ -210,6 +219,7 @@ public class ScreenRecorder extends Service {
     };
 
     private Display display;
+    private MediaProjectionManager projectionManager;
 
     public class RecordingBinder extends Binder {
         public boolean isStarted() {
@@ -444,7 +454,7 @@ public class ScreenRecorder extends Service {
         } else {
             customSampleRate = 44100;
 
-            String sampleRateValue = ((AudioManager)getSystemService(Context.AUDIO_SERVICE)).getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+            String sampleRateValue = ((AudioManager) getSystemService(Context.AUDIO_SERVICE)).getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
 
             if (sampleRateValue != null) {
                 if (sampleRateValue.length() < 10) {
@@ -486,10 +496,12 @@ public class ScreenRecorder extends Service {
         if (tileBinder != null) {
             tileBinder.recordingState(true);
         }
-
         screenRecordingStart();
-    }
+//        Intent intent = new Intent(this, PermissionRequestActivity.class);
+//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//        startActivity(intent);
 
+    }
     public void actionConnect(MainActivity.ActivityBinder service) {
         activityBinder = service;
 
@@ -778,8 +790,11 @@ public class ScreenRecorder extends Service {
         if (isRestarting == false) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(NOTIFICATION_RECORDING_ID, notification.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION);
+                Log.d("MyService", "startForeground called");
             } else {
                 startForeground(NOTIFICATION_RECORDING_ID, notification.build());
+                Log.d("MyService", "startForeground called else");
+
             }
         }
 
@@ -838,6 +853,7 @@ public class ScreenRecorder extends Service {
                 if (isActive == true) {
                     recordingError();
                 }
+
             }
         };
         if (recordOnlyAudio == true && (recordPlayback == false || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)) {
@@ -1086,34 +1102,34 @@ public class ScreenRecorder extends Service {
 //        }
 //
 //        if (isRestarting == false) {
-            IconCompat finishedIcon = IconCompat.createWithResource(this, R.drawable.icon_record_finished_status);
+        IconCompat finishedIcon = IconCompat.createWithResource(this, R.drawable.icon_record_finished_status);
 
-            NotificationCompat.Builder finishedNotification;
+        NotificationCompat.Builder finishedNotification;
 
-            finishedNotification = new NotificationCompat.Builder(this, NOTIFICATIONS_RECORDING_CHANNEL);
+        finishedNotification = new NotificationCompat.Builder(this, NOTIFICATIONS_RECORDING_CHANNEL);
 
-            if (recordOnlyAudio == true) {
-                finishedNotification = finishedNotification
-                        .setContentTitle(getString(R.string.recording_audio_finished_title))
-                        .setContentText(getString(R.string.recording_audio_finished_text));
+        if (recordOnlyAudio == true) {
+            finishedNotification = finishedNotification
+                    .setContentTitle(getString(R.string.recording_audio_finished_title))
+                    .setContentText(getString(R.string.recording_audio_finished_text));
 
 //            } else {
 //                finishedNotification = finishedNotification
 //                        .setContentTitle(getString(R.string.recording_finished_title))
 //                        .setContentText(getString(R.string.recording_finished_text));
 
-            }
-            finishedNotification = finishedNotification
-                    .setContentIntent(openFolderActionIntent)
-                    .setSmallIcon(R.drawable.icon_record_finished_status)
-                    .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.icon_record_finished_color_action_normal))
-                    .addAction(deleteRecordAction.build())
-                    .setAutoCancel(true)
-                    .setPriority(NotificationCompat.PRIORITY_LOW);
+        }
+        finishedNotification = finishedNotification
+                .setContentIntent(openFolderActionIntent)
+                .setSmallIcon(R.drawable.icon_record_finished_status)
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.icon_record_finished_color_action_normal))
+                .addAction(deleteRecordAction.build())
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW);
 
-            if (dontNotifyOnFinish == false) {
-                recordingNotificationManager.notify(NOTIFICATION_RECORDING_FINISHED_ID, finishedNotification.build());
-            }
+        if (dontNotifyOnFinish == false) {
+            recordingNotificationManager.notify(NOTIFICATION_RECORDING_FINISHED_ID, finishedNotification.build());
+        }
 //        } else {
 //            IconCompat restartIcon = IconCompat.createWithResource(this, R.drawable.icon_rotate_status);
 //
@@ -1137,8 +1153,8 @@ public class ScreenRecorder extends Service {
 //        }
 //
 //        if (isRestarting == false) {
-            stopForeground(true);
-        }
+        stopForeground(true);
+    }
 
 
     @TargetApi(Build.VERSION_CODES.N)
