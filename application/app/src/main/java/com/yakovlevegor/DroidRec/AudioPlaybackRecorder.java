@@ -227,26 +227,35 @@ class AudioPlaybackRecorder implements Encoder {
                 AudioRecord r;
                 AudioRecord m;
                 if (recordAudio == true) {
+                    Log.d(TAG, "error1");
                     r = createAudioRecord(mSampleRate, mChannelConfig, AudioFormat.ENCODING_PCM_16BIT, mProjection);
                     if (r == null) {
+                        Log.d(TAG, "error2");
                         mCallbackDelegate.onError(AudioPlaybackRecorder.this, new IllegalArgumentException());
                     } else {
+                        Log.d(TAG, "error3");
                         r.startRecording();
                         mPlayback = r;
                     }
                 }
                 if (recordMicrophone == true) {
+                    Log.d(TAG, "error4");
                     m = createMicRecord(mSampleRate, mChannelConfig, mFormat);
                     if (m == null) {
+                        Log.d(TAG, "error5");
                         mCallbackDelegate.onError(AudioPlaybackRecorder.this, new IllegalArgumentException());
+                        Log.d(TAG, "Failed to micrecord");
                     } else {
+                        Log.d(TAG, "error6");
                         m.startRecording();
                         mMic = m;
                     }
                 }
                 try {
+                    Log.d(TAG, "error7");
                     mEncoder.prepare();
                 } catch (Exception e) {
+                    Log.d(TAG, "error8");
                     mCallbackDelegate.onError(AudioPlaybackRecorder.this, e);
                 }
             } else if (msg.what == MSG_DRAIN_OUTPUT) {
@@ -257,20 +266,27 @@ class AudioPlaybackRecorder implements Encoder {
                 mMuxingOutputBufferIndices.poll();
                 pollInputIfNeed();
             } else if (msg.what == MSG_STOP) {
+                Log.d(TAG, "error11");
                 if (recordAudio == true && mPlayback != null) {
+                    Log.d(TAG, "error12");
                     mPlayback.stop();
                 }
                 if (recordMicrophone == true && mMic != null) {
+                    Log.d(TAG, "error13");
                     mMic.stop();
                 }
+                Log.d(TAG, "error14");
                 mEncoder.stop();
             } else if (msg.what == MSG_RELEASE) {
+                Log.d(TAG, "error15");
                 if (mPlayback != null) {
                     mPlayback.release();
+                    Log.d(TAG, "error16");
                     mPlayback = null;
                 }
                 if (recordMicrophone == true) {
                     mMic.release();
+                    Log.d(TAG, "error17");
                     mMic = null;
                 }
                 mEncoder.release();

@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaCodec;
 import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.Looper;
@@ -38,14 +37,11 @@ import java.util.concurrent.TimeUnit;
 
 public class AudioProcessor {
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private AudioEncoder mEncoder;
     private ThreadPoolExecutor executor;
     private Handler mainHandler;
     private TextView mTextView;
     private String all_result = "";
     private AudioPlaybackRecorder audioPlaybackRecorder;
-    private MediaCodec mediaCodec;
-    private long timeoutUs;
     private static final int SAMPLE_RATE = 16000;
     private final static int CHUNK_TO_READ = 5;
     private final static int CHUNK_SIZE = 12800;
@@ -53,15 +49,12 @@ public class AudioProcessor {
     //private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
     private AudioRecord audioRecord;
     private Thread processingThread;
-    private ByteBuffer newBuffer;
     private final Module aasistModule;
     private final Context context;
     private volatile boolean isRunning = true;
     private ArrayList<Float> scores = new ArrayList<>();
     int segmentIndex = 0;
     private ByteBuffer buffer;
-    private int index;
-
 
     public AudioProcessor(Module aasistModule, ThreadPoolExecutor executor, Context context, TextView textView) {
         this.context = context;
@@ -69,7 +62,6 @@ public class AudioProcessor {
         this.executor = executor;
         this.mTextView = textView;
     }
-
     private boolean allZero(short[] array) {
         for (short value : array) {
             if (value != 0) {
@@ -81,16 +73,7 @@ public class AudioProcessor {
     }
     public void setBuffer(ByteBuffer buffer) {
         this.buffer = buffer;
-        ShortBuffer shortBuf = buffer.asShortBuffer();
-
-        // ShortBuffer를 short[] 배열로 변환합니다.
-        short[] array = new short[shortBuf.remaining()];
-        shortBuf.get(array);
-
-        // allZero() 메서드를 호출합니다.
-        if(allZero(array)) {
             processBuffer();
-        }
     }
     private void processBuffer() {
         if (buffer != null) {
@@ -114,28 +97,17 @@ public class AudioProcessor {
 
     public void run() {
         if (executor == null) {
-            executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+            executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(6);
         }
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 final int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
 
-                @SuppressLint("MissingPermission") final AudioRecord record = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
+                @SuppressLint("MissingPermission") final AudioRecord record = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
                         bufferSize);
                 if (record.getState() != AudioRecord.STATE_INITIALIZED) {
                     Log.e(TAG, "Audio Record can't initialize!");
-                    return;
-                }
-
-                mEncoder = new AudioEncoder(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, false, "");
-                try {
-                    if (Looper.myLooper() == null) {
-                        Looper.prepare();
-                    }
-                    mEncoder.prepare();
-                } catch (IOException e) {
-                    Log.e(TAG, "Failed to prepare AudioEncoder", e);
                     return;
                 }
 
@@ -191,44 +163,6 @@ public class AudioProcessor {
                     if (!allZero(audioBuffer)) {
                         Log.d(TAG, "audio buffer is not all zero");
                         result = detect(floatInputBuffer);
-                        if (result.length() > 0)
-                            all_result = result;
-                    } else {
-                        MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-
-                        int index = mEncoder.mEncoder.dequeueOutputBuffer(bufferInfo, 1);
-                        while (audioPlaybackRecorder == null) {
-                            long startTime = System.currentTimeMillis();
-                            long waitTime = 5000;
-                            if (System.currentTimeMillis() - startTime > waitTime) {
-                                Log.e(TAG, "Waiting for audioPlaybackRecorder timed out");
-                                return;  // 대기 시간이 초과되면 메서드를 종료
-                            }
-
-                            try {
-                                Thread.sleep(100);  // 100밀리초 동안 대기
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();  // 현재 스레드의 인터럽트 상태를 설정
-                                return;  // 스레드가 인터럽트되었으므로 메서드를 종료
-                            }
-                        }
-                        ByteBuffer newBuffer = audioPlaybackRecorder.getOutputBuffer(index);
-
-                        // ByteBuffer를 FloatBuffer로 변환합니다.
-                        FloatBuffer floatBuf = newBuffer.asFloatBuffer();
-
-                        // FloatBuffer를 float[] 배열로 변환합니다.
-                        float[] newFloatArray = new float[floatBuf.remaining()];
-                        floatBuf.get(newFloatArray);
-
-                        // float[] 배열을 double[] 배열로 변환합니다.
-                        double[] newDoubleArray = new double[newFloatArray.length];
-                        for (int i = 0; i < newFloatArray.length; i++) {
-                            newDoubleArray[i] = newFloatArray[i];
-                        }
-
-                        // 새로운 배열로 detect() 메서드를 호출합니다.
-                        result = detect(newDoubleArray);
                         if (result.length() > 0)
                             all_result = result;
                     }

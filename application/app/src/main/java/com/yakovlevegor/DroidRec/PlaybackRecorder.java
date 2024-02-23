@@ -60,7 +60,6 @@ import com.yakovlevegor.DroidRec.R;
 public class PlaybackRecorder{
     private static final String TAG = PlaybackRecorder.class.getSimpleName();
     private static final int INVALID_INDEX = -1;
-
     private FileDescriptor mDstDesc = null;
     private VideoEncoder mVideoEncoder;
     private AudioPlaybackRecorder mAudioEncoder;

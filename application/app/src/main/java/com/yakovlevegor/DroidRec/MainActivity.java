@@ -27,6 +27,8 @@
 
 package com.yakovlevegor.DroidRec;
 
+import static android.os.Build.VERSION_CODES.M;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -55,11 +57,13 @@ import android.hardware.display.DisplayManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -125,7 +129,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
     private static final String CHANNEL_ID = "notify";
     private AudioProcessor audioProcessor;
     private static final String TAG = MainActivity.class.getName();
@@ -352,6 +356,48 @@ public class MainActivity extends AppCompatActivity {
     private boolean recordButtonLocked = false;
 
     private boolean recordButtonPressed = false;
+
+    private MediaProjectionManager mMediaProjectionManager;
+    private MediaProjection mMediaProjection;
+
+
+    private static final int REQUEST_MEDIA_PROJECTION = 1;
+
+
+    private void requestMediaProjection() {
+        Intent captureIntent = mMediaProjectionManager.createScreenCaptureIntent();
+        startActivityForResult(captureIntent, REQUEST_MEDIA_PROJECTION);
+    }
+
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        if (requestCode == REQUEST_MEDIA_PROJECTION) {
+//            // NOTE: Should pass this result data into a Service to run ScreenRecorder.
+//            // The following codes are merely exemplary.
+//
+//            MediaProjection mediaProjection = mMediaProjectionManager.getMediaProjection(resultCode, data);
+//            if (mediaProjection == null) {
+//                Log.e("@@", "media projection is null");
+//                return;
+//            }
+//
+//            mMediaProjection = mediaProjection;
+//            mMediaProjection.registerCallback(mProjectionCallback, new Handler());
+//            startCapturing(mediaProjection);
+//        }
+//    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_MEDIA_PROJECTION) {
+            if (resultCode == RESULT_OK && data != null) {
+                mMediaProjection = mMediaProjectionManager.getMediaProjection(resultCode, data);
+                recordingStart();// 이후에 mMediaProjection를 사용하여 화면 캡처를 시작합니다.
+            } else {
+            }
+        }
+    }
+    private void startCapturing(MediaProjection mediaProjection) {
+
+        }
 
     private enum DarkenState {
         TO_DARKEN,
@@ -1582,11 +1628,11 @@ public class MainActivity extends AppCompatActivity {
 
 
             if (audioProcessor == null) {
-                ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
+                ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(6);
                 audioProcessor = new AudioProcessor(aasistModule, executor, getApplicationContext(), textView);
             }else {
                 // AudioProcessor 객체가 이미 존재하는 경우, 새로운 ThreadPoolExecutor 객체를 설정합니다.
-                ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
+                ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(6);
                 audioProcessor.setExecutor(executor);
             }
             if (audioProcessor != null) {
@@ -2525,14 +2571,19 @@ public class MainActivity extends AppCompatActivity {
                             String accesspermission[] = {Manifest.permission.RECORD_AUDIO};
                             requestPermissions(accesspermission, REQUEST_MODE_CHANGE);
                         } else {
-                            recordScreenSetting.setImageDrawable(recordScreenStateDisabled);
-                            recordScreenSetting.setContentDescription(getResources().getString(R.string.setting_record_screen) + ": " + getResources().getString(R.string.option_deactivated));
-                            setRecordMode(true);
+                            if (mMediaProjection == null) {
+                                requestMediaProjection();
+                            } else {
+                                recordScreenSetting.setImageDrawable(recordScreenStateDisabled);
+                                recordScreenSetting.setContentDescription(getResources().getString(R.string.setting_record_screen) + ": " + getResources().getString(R.string.option_deactivated));
+                                setRecordMode(true);
+                            }
                         }
                     }
                 }
             }
         });
+
 
         recordMicrophoneSetting.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -2854,6 +2905,7 @@ public class MainActivity extends AppCompatActivity {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 appSettingsEditor.putBoolean("checksoundplayback", true);
                 appSettingsEditor.commit();
+                requestMediaProjection();
             } else {
                 Toast.makeText(this, R.string.error_audio_required, Toast.LENGTH_SHORT).show();
             }
