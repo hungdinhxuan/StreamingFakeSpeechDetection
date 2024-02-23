@@ -1900,7 +1900,7 @@ public class MainActivity extends AppCompatActivity{
         }
         if (aasistModule == null) {
             System.out.println("Loading model...");
-            aasistModule = Module.load(assetFilePath(getApplicationContext(), "W2V2BASE_AASISTL_DKDLoss_cnsl_audiomentations_3_v10_best63.pt"));
+            aasistModule = Module.load(assetFilePath(getApplicationContext(), "W2V2BASE_AASISTL_DKDLoss_cnsl_audiomentations_3_v4_best63.pt"));
             System.out.println("Loaded model aasistModule");
         }
 

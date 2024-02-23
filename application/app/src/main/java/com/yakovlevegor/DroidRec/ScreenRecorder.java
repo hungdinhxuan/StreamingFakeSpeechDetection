@@ -792,7 +792,8 @@ public class ScreenRecorder extends Service {
 
         if (isRestarting == false) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForeground(NOTIFICATION_RECORDING_ID, notification.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION);
+                startForeground(NOTIFICATION_RECORDING_ID, notification.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+//
                 Log.d("MyService", "startForeground called");
             } else {
                 startForeground(NOTIFICATION_RECORDING_ID, notification.build());
@@ -896,7 +897,7 @@ public class ScreenRecorder extends Service {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             recordingMediaRecorder = new MediaRecorder();
-
+        Log.d(TAG, "screenRecordingStart: E1");
             recordingMediaRecorder.setOnErrorListener(new MediaRecorder.OnErrorListener() {
                 @Override
                 public void onError(MediaRecorder mr, int what, int extra) {
@@ -968,9 +969,9 @@ public class ScreenRecorder extends Service {
                 recordingVirtualDisplay.setSurface(recordingMediaRecorder.getSurface());
             }
         }
-
+//
         else {
-            Log.d(TAG, "screenRecordingStart: when SDK > " + Build.VERSION.SDK_INT);
+            Log.d(TAG, "screenRecordingStart: when SDK > android Q (" + Build.VERSION_CODES.Q + ") SDK: "  + Build.VERSION.SDK_INT);
 
             try {
                 recordingOpenFileDescriptor = getContentResolver().openFileDescriptor(recordFilePath, "rw");
@@ -979,11 +980,13 @@ public class ScreenRecorder extends Service {
                 recordingError();
             }
 
+
             recorderPlayback = new PlaybackRecorder(getApplicationContext(), recordOnlyAudio, recordingVirtualDisplay, recordingFileDescriptor, recordingMediaProjection, recordOnlyAudio ? 0 : width, recordOnlyAudio ? 0 : height, recordOnlyAudio ? 0 : scaleRatio,  frameRate, recordMicrophone, recordPlayback, customQuality, qualityScale, customFPS, fpsValue, customBitrate, bitrateValue, (!customCodec.contentEquals(getResources().getString(R.string.codec_option_auto_value))), customCodec, (!customAudioCodec.contentEquals(getResources().getString(R.string.audio_codec_option_auto_value))), customAudioCodec, customSampleRate, customChannelsCount, mediaAudioSource, gameAudioSource, unknownAudioSource);
             Log.d(TAG, "recorderPlayback makes well");
             recorderPlayback.start();
             Log.d(TAG, "playback start well");
         }
+
 
         isActive = true;
 

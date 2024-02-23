@@ -15,7 +15,8 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION" />
-
+<!--    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT"-->
+<!--        tools:ignore="ProtectedPermissions" />-->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
@@ -80,8 +81,7 @@
         <service
             android:name="com.yakovlevegor.DroidRec.ScreenRecorder"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection"
-            tools:node="merge"/>
+            android:foregroundServiceType="mediaProjection|microphone"/>
         <service
             android:name="com.yakovlevegor.DroidRec.FloatingControls"
             android:exported="false" />
