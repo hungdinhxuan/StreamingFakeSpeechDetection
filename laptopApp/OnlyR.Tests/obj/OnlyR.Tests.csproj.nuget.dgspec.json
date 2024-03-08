@@ -1,0 +1,334 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Tests\\OnlyR.Tests.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Core\\OnlyR.Core.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Core\\OnlyR.Core.csproj",
+        "projectName": "OnlyR.Core",
+        "projectPath": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Core\\OnlyR.Core.csproj",
+        "packagesPath": "C:\\Users\\wsm04\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Core\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\wsm04\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net7.0-windows"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net7.0-windows7.0": {
+            "targetAlias": "net7.0-windows",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net7.0-windows7.0": {
+          "targetAlias": "net7.0-windows",
+          "dependencies": {
+            "Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[0.4.410601, )"
+            },
+            "Microsoft.Windows.Compatibility": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "NAudio.Lame": {
+              "target": "Package",
+              "version": "[2.0.1, )"
+            },
+            "NAudio.Wasapi": {
+              "target": "Package",
+              "version": "[2.1.0, )"
+            },
+            "NAudio.WinForms": {
+              "target": "Package",
+              "version": "[2.1.0, )"
+            },
+            "Roslynator.Analyzers": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[4.2.0, )"
+            },
+            "TorchSharp-cpu": {
+              "target": "Package",
+              "version": "[0.101.6, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            },
+            "Microsoft.WindowsDesktop.App.WindowsForms": {
+              "privateAssets": "none"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\7.0.406\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Tests\\OnlyR.Tests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Tests\\OnlyR.Tests.csproj",
+        "projectName": "OnlyR.Tests",
+        "projectPath": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Tests\\OnlyR.Tests.csproj",
+        "packagesPath": "C:\\Users\\wsm04\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Tests\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\wsm04\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net7.0-windows"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net7.0-windows7.0": {
+            "targetAlias": "net7.0-windows",
+            "projectReferences": {
+              "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Core\\OnlyR.Core.csproj": {
+                "projectPath": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Core\\OnlyR.Core.csproj"
+              },
+              "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR\\OnlyR.csproj": {
+                "projectPath": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR\\OnlyR.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net7.0-windows7.0": {
+          "targetAlias": "net7.0-windows",
+          "dependencies": {
+            "MSTest.TestAdapter": {
+              "target": "Package",
+              "version": "[3.0.2, )"
+            },
+            "MSTest.TestFramework": {
+              "target": "Package",
+              "version": "[3.0.2, )"
+            },
+            "Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[0.4.410601, )"
+            },
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.5.0, )"
+            },
+            "Moq": {
+              "target": "Package",
+              "version": "[4.18.4, )"
+            },
+            "Roslynator.Analyzers": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[4.2.0, )"
+            },
+            "TorchSharp-cpu": {
+              "target": "Package",
+              "version": "[0.101.6, )"
+            },
+            "coverlet.collector": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.2.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\7.0.406\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR\\OnlyR.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR\\OnlyR.csproj",
+        "projectName": "OnlyR",
+        "projectPath": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR\\OnlyR.csproj",
+        "packagesPath": "C:\\Users\\wsm04\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\wsm04\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net7.0-windows"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net7.0-windows7.0": {
+            "targetAlias": "net7.0-windows",
+            "projectReferences": {
+              "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Core\\OnlyR.Core.csproj": {
+                "projectPath": "C:\\Users\\wsm04\\Desktop\\OnlyR\\OnlyR.Core\\OnlyR.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net7.0-windows7.0": {
+          "targetAlias": "net7.0-windows",
+          "dependencies": {
+            "CommunityToolkit.Mvvm": {
+              "target": "Package",
+              "version": "[8.1.0, )"
+            },
+            "FluentCommandLineParser-netstandard": {
+              "target": "Package",
+              "version": "[1.4.3.13, )"
+            },
+            "MaterialDesignThemes": {
+              "target": "Package",
+              "version": "[4.8.0, )"
+            },
+            "Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[0.4.410601, )"
+            },
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            },
+            "Roslynator.Analyzers": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[4.2.0, )"
+            },
+            "Serilog.Sinks.File": {
+              "target": "Package",
+              "version": "[5.0.0, )"
+            },
+            "TorchSharp-cpu": {
+              "target": "Package",
+              "version": "[0.101.6, )"
+            },
+            "WinCopies.WindowsAPICodePack.Shell": {
+              "target": "Package",
+              "version": "[2.12.0.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            },
+            "Microsoft.WindowsDesktop.App": {
+              "privateAssets": "none"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\7.0.406\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

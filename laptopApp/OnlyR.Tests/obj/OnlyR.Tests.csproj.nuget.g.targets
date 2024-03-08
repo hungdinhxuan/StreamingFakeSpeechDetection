@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)torchsharp\0.101.6\buildTransitive\net6.0\TorchSharp.targets" Condition="Exists('$(NuGetPackageRoot)torchsharp\0.101.6\buildTransitive\net6.0\TorchSharp.targets')" />
+    <Import Project="$(NuGetPackageRoot)libtorch-cpu-win-x64\2.1.0.1\buildTransitive\netstandard2.0\libtorch-cpu-win-x64.targets" Condition="Exists('$(NuGetPackageRoot)libtorch-cpu-win-x64\2.1.0.1\buildTransitive\netstandard2.0\libtorch-cpu-win-x64.targets')" />
+    <Import Project="$(NuGetPackageRoot)libtorch-cpu-osx-x64\2.1.0.1\buildTransitive\netstandard2.0\libtorch-cpu-osx-x64.targets" Condition="Exists('$(NuGetPackageRoot)libtorch-cpu-osx-x64\2.1.0.1\buildTransitive\netstandard2.0\libtorch-cpu-osx-x64.targets')" />
+    <Import Project="$(NuGetPackageRoot)libtorch-cpu-linux-x64\2.1.0.1\buildTransitive\netstandard2.0\libtorch-cpu-linux-x64.targets" Condition="Exists('$(NuGetPackageRoot)libtorch-cpu-linux-x64\2.1.0.1\buildTransitive\netstandard2.0\libtorch-cpu-linux-x64.targets')" />
+    <Import Project="$(NuGetPackageRoot)libtorch-cpu\2.1.0.1\buildTransitive\netstandard2.0\libtorch-cpu.targets" Condition="Exists('$(NuGetPackageRoot)libtorch-cpu\2.1.0.1\buildTransitive\netstandard2.0\libtorch-cpu.targets')" />
+    <Import Project="$(NuGetPackageRoot)torchsharp-cpu\0.101.6\buildTransitive\net6.0\TorchSharp-cpu.targets" Condition="Exists('$(NuGetPackageRoot)torchsharp-cpu\0.101.6\buildTransitive\net6.0\TorchSharp-cpu.targets')" />
+    <Import Project="$(NuGetPackageRoot)communitytoolkit.mvvm\8.1.0\buildTransitive\netstandard2.1\CommunityToolkit.Mvvm.targets" Condition="Exists('$(NuGetPackageRoot)communitytoolkit.mvvm\8.1.0\buildTransitive\netstandard2.1\CommunityToolkit.Mvvm.targets')" />
+    <Import Project="$(NuGetPackageRoot)mstest.testframework\3.0.2\build\net6.0\MSTest.TestFramework.targets" Condition="Exists('$(NuGetPackageRoot)mstest.testframework\3.0.2\build\net6.0\MSTest.TestFramework.targets')" />
+    <Import Project="$(NuGetPackageRoot)mstest.testadapter\3.0.2\build\net6.0\MSTest.TestAdapter.targets" Condition="Exists('$(NuGetPackageRoot)mstest.testadapter\3.0.2\build\net6.0\MSTest.TestAdapter.targets')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.codecoverage\17.5.0\build\netstandard2.0\Microsoft.CodeCoverage.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.codecoverage\17.5.0\build\netstandard2.0\Microsoft.CodeCoverage.targets')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.net.test.sdk\17.5.0\build\netcoreapp3.1\Microsoft.NET.Test.Sdk.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.net.test.sdk\17.5.0\build\netcoreapp3.1\Microsoft.NET.Test.Sdk.targets')" />
+    <Import Project="$(NuGetPackageRoot)coverlet.collector\3.2.0\build\netstandard1.0\coverlet.collector.targets" Condition="Exists('$(NuGetPackageRoot)coverlet.collector\3.2.0\build\netstandard1.0\coverlet.collector.targets')" />
+  </ImportGroup>
+</Project>
