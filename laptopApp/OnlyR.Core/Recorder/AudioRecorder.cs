@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -32,7 +33,6 @@ namespace OnlyR.Core.Recorder
         // use these 2 together. Experiment to get the best VU display...
         private const int RequiredReportingIntervalMs = 40;
         private const int VuSpeed = 5;
-
         private LameMP3FileWriter? _mp3Writer;
         private IWaveIn? _waveSource;
         private IWaveIn? _loopbackCapture;
@@ -46,9 +46,10 @@ namespace OnlyR.Core.Recorder
         private torch.jit.ScriptModule _model;
         private int _dampedLevel;
         private Overlay overlay;
-        private WaveProviderToWaveStream? _WaveProviderToWaveStream;
-     
-         
+        
+
+
+
         bool loopBack = false;
         //byte[]? combinedBuffer = null;
         public List<float> inferenceTime = new List<float>();
@@ -59,12 +60,25 @@ namespace OnlyR.Core.Recorder
         byte[] saveSample = new byte[128000];
         public AudioRecorder()
         {
+            string assemblyLocation = Assembly.GetExecutingAssembly().Location;
+
+            // 어셈블리의 디렉토리를 얻습니다.
+            string assemblyPath = Path.GetDirectoryName(assemblyLocation);
+
+            // 모델 파일의 이름입니다.
+            string modelFileName = "W2V2BASE_AASISTL_DKDLoss_cnsl_audiomentations_5_best11_no_optimize_mobile.pt";
+
+            // 모델 파일의 전체 경로를 구성합니다.
+            string modelFilePath = Path.Combine(assemblyPath, modelFileName);
             _recordingStatus = RecordingStatus.NotRecording;
-            _model = torch.jit.load("C:\\Users\\wsm04\\Desktop\\DeepvoiceApp\\OnlyR.Core\\Recorder\\W2V2BASE_AASISTL_DKDLoss_cnsl_audiomentations_5_best11_no_optimize_mobile.pt");
+            _model = torch.jit.load(modelFilePath);
             Console.WriteLine("model Load OK");
             _model.eval();
             overlay = new Overlay();
             overlay.Show();
+           
+
+
         }
 
         public event EventHandler<RecordingProgressEventArgs>? ProgressEvent;
@@ -101,6 +115,8 @@ namespace OnlyR.Core.Recorder
          bool RecordEach = false;
         public void Start(RecordingConfig recordingConfig)
         {
+           string finalFolderPath = Path.GetDirectoryName(recordingConfig.FinalFilePath);
+
             if (_recordingStatus == RecordingStatus.NotRecording)
             {
                 CheckRecordingDevice(recordingConfig);
@@ -116,7 +132,7 @@ namespace OnlyR.Core.Recorder
                     loopBack = true;
                 }
                 else if (recordingConfig.UseBoth)
-                {
+                {   
                     byte[]? micBuffer = null;
                     byte[]? loopbackBuffer = null;
                     int micBytes = 0;
@@ -189,7 +205,7 @@ namespace OnlyR.Core.Recorder
                             if (_totalBytesAccumulated == 128000)
                             {
                                 
-                                    Inference(ConvertByteToFloat(sample), sample);
+                                    Inference(ConvertByteToFloat(sample), sample, finalFolderPath);
                                     Array.Clear(sample, 0, sample.Length);
                                     // 누적된 데이터와 카운터 초기화
                                     _totalBytesAccumulated = 0;
@@ -233,7 +249,67 @@ namespace OnlyR.Core.Recorder
                     InitAggregator(_waveSource.WaveFormat.SampleRate);
                     InitFader(_waveSource.WaveFormat.SampleRate);
 
-                    _waveSource.DataAvailable += WaveSourceDataAvailableHandler;
+                    _waveSource.DataAvailable += (s, waveInEventArgs) =>
+                         {
+                             // as audio samples are provided by WaveIn, we hook in here 
+                             // and write them to disk, encoding to MP3 on the fly 
+                             // using the _mp3Writer.
+                             var buffer = waveInEventArgs.Buffer;
+                             var bytesRecorded = waveInEventArgs.BytesRecorded;
+                             var buff = new WaveBuffer(buffer);
+                             int shortsToCopy = bytesRecorded;
+                             int expectedAccumulation = _totalBytesAccumulated + bytesRecorded;
+                             //string outputPath = Path.Combine(@"C:\Users\wsm04\Desktop\audio");
+                             if (expectedAccumulation > 128000)
+                             {
+                                 // 64000을 초과하지 않도록 누적할 데이터의 양 조절
+                                 shortsToCopy = 128000 - _totalBytesAccumulated;
+                             }
+                             Array.Copy(buff.ByteBuffer, 0, sample, _totalBytesAccumulated, shortsToCopy);
+                             //Array.Copy(buff.ByteBuffer, 0, saveSample, _totalBytesAccumulated, bytesRecorded);
+                             //SaveByteArrayAsWav(buffer, outputPath);
+                             _totalBytesAccumulated += shortsToCopy;
+                             //samplerate 16000 mono 면 
+                             if (_totalBytesAccumulated == 128000)
+                             {
+                                 if (loopBack == true)
+                                 {
+                                     double average = sample.Average(b => (double)b);
+                                     if ((average > 240 && average < 260) || CheckIf90PercentZeros(sample) == true)
+                                     {
+                                         Console.Write("Not Inference");
+                                         overlay.UpdateOverlay("Not Inference");
+                                         Array.Clear(sample, 0, sample.Length);
+                                         _totalBytesAccumulated = 0;
+                                     }
+                                     else
+                                     {
+                                         Inference(ConvertByteToFloat(sample), sample, finalFolderPath);
+                                         Array.Clear(sample, 0, sample.Length);
+                                         // 누적된 데이터와 카운터 초기화
+                                         _totalBytesAccumulated = 0;
+                                     }
+                                 }
+                                 else
+                                 {
+                                     Inference(ConvertByteToFloat(sample), sample, finalFolderPath);
+                                     Array.Clear(sample, 0, sample.Length);
+                                     // 누적된 데이터와 카운터 초기화
+                                     _totalBytesAccumulated = 0;
+                                 }
+                             }
+                             var isFloatingPointAudio = _waveSource?.WaveFormat.BitsPerSample == 32;
+
+                             if (_fader != null && _fader.Active)
+                             {
+                                 // we're fading out...
+                                 _fader.FadeBuffer(buffer, bytesRecorded, isFloatingPointAudio);
+                             }
+
+                             AddToSampleAggregator(buffer, bytesRecorded, isFloatingPointAudio);
+
+                             _mp3Writer?.Write(buffer, 0, bytesRecorded);
+                         };
                     _waveSource.RecordingStopped += WaveSourceRecordingStoppedHandler;
 
                     _mp3Writer = new LameMP3FileWriter(
@@ -297,7 +373,7 @@ namespace OnlyR.Core.Recorder
             _silenceWaveOut.Init(silence);
             _silenceWaveOut.Play();
         }
-
+       
         /// <summary>
         /// Stop recording.
         /// </summary>
@@ -379,8 +455,9 @@ namespace OnlyR.Core.Recorder
             var damped = GetDampedVolumeLevel(value);
             OnProgressEvent(new RecordingProgressEventArgs { VolumeLevelAsPercentage = damped });
         }
-        public void Inference(float[] audioData, byte[] saveSample)
+        public void Inference(float[] audioData, byte[] saveSample,string path)
         {
+            
             //Console.Write(_totalBytesAccumulated + "2");
             long inputSize = audioData.Length;
         
@@ -401,9 +478,9 @@ namespace OnlyR.Core.Recorder
             Console.WriteLine($"Inference Time: {DoubleTime} ms"); //추론시간 출력
             Console.WriteLine(formattedResult); //추론 결과 출력
                                                 //Console.WriteLine("success");
-            
-            string fileName = $"oldModel_screen_Media_segment_{i}_{showResult}.wav";
-            string outputPath = Path.Combine(@"C:\Users\wsm04\Desktop\audio", fileName); // savepath
+            string fileName = $"{i}_{showResult}.wav";
+            //string fileName = $"oldModel_screen_Media_segment_{i}_{showResult}.wav";
+            string outputPath = Path.Combine(path, fileName); // savepath
             SaveByteArrayAsWav(saveSample, outputPath); //모델 성능 비교위해 만듬
             overlay.UpdateOverlay($"{formattedResult}"); //UI에 표시
                 i = i + 1;
@@ -462,7 +539,7 @@ namespace OnlyR.Core.Recorder
 
 
         //Data핸들러
-        private void WaveSourceDataAvailableHandler(object? sender, WaveInEventArgs waveInEventArgs)
+       /* private void WaveSourceDataAvailableHandler(object? sender, WaveInEventArgs waveInEventArgs)
         {
             // as audio samples are provided by WaveIn, we hook in here 
             // and write them to disk, encoding to MP3 on the fly 
@@ -522,7 +599,7 @@ namespace OnlyR.Core.Recorder
             AddToSampleAggregator(buffer, bytesRecorded, isFloatingPointAudio);
 
             _mp3Writer?.Write(buffer, 0, bytesRecorded);
-        }
+        }*/
         private bool CheckIf90PercentZeros(byte[] buffer)
         {
             if (buffer == null || buffer.Length == 0)
@@ -692,5 +769,7 @@ namespace OnlyR.Core.Recorder
             // 알림이 사라진 후 아이콘도 숨김
             notifyIcon.Dispose();
         }
+       
+
     }
 }

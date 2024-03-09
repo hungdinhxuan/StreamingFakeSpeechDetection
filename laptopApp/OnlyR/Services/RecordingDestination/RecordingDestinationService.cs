@@ -59,7 +59,14 @@ namespace OnlyR.Services.RecordingDestination
 
                 for (int increment = 1; increment <= maxFileCount && result == null; ++increment)
                 {
-                    var candidateFile = GenerateCandidateFilePath(folder, dt, increment);
+                    var newFolderName = increment.ToString("D3");
+                    // Combine the base folder with the new folder name to get the new folder path
+                    var newFolderPath = Path.Combine(folder, newFolderName);
+
+                    // Ensure the new folder exists
+                    Directory.CreateDirectory(newFolderPath);
+
+                    var candidateFile = GenerateCandidateFilePath(newFolderPath, dt, increment);
                     if (!File.Exists(candidateFile))
                     {
                         result = new PathAndTrackNumber(candidateFile, increment);
@@ -71,9 +78,9 @@ namespace OnlyR.Services.RecordingDestination
         }
 
         private static string GenerateCandidateFilePath(string folder, DateTime dt, int increment)
-        {
+        {   
             return Path.Combine(
-                folder,
+                folder, 
                 $"{CultureInfo.CurrentCulture.DateTimeFormat.DayNames[(int)dt.DayOfWeek]} {dt:dd MMMM yyyy} - {increment:D3}.mp3");
         }
 
