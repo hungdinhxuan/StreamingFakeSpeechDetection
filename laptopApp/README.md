@@ -7,14 +7,14 @@ Windows audio recorder using C#, WPF, NAudio, NAudio.Lame, AutoMapper, GalaSoft 
 ### System Requirements
 
 * Windows 10
-* .NET 5 x86 or later
+* .NET 7 x86 or later
 * 2GB RAM
 * 15MB Hard disk space
 * Audio recording device
-
+* DeepFake Detection Streaming
 ### Download
 
-If you just want to install the application, please download the [OnlyRSetup.exe](https://github.com/AntonyCorbett/OnlyR/releases/latest) file (there is also a portable version if you'd prefer to just copy a folder). If you choose the portable option, you may also need to download and install the Microsoft .NET 5.0 Desktop runtime (x86) from [here](https://dotnet.microsoft.com/download/dotnet/5.0/runtime).
+If you just want to install the application, please download the [OnlyRSetup.exe](https://github.com/hungdinhxuan/StreamingFakeSpeechDetection/releases/tag/v0.2) file (there is also a portable version if you'd prefer to just copy a folder). If you choose the portable option, you may also need to download and install the Microsoft .NET 7.0 Desktop runtime (x86) from [here](https://dotnet.microsoft.com/download/dotnet/7.0/runtime).
 
 ### Help
 
