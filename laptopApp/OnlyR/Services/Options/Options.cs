@@ -28,7 +28,7 @@ namespace OnlyR.Services.Options
         {
             MaxRecordingsInOneFolder = DefaultMaxRecordings;
             SampleRate = DefaultSampleRate;
-            ChannelCount = DefaultChannelCount;
+            ChannelCount = 2;// DefaultChannelCount;
             Mp3BitRate = DefaultMp3BitRate;
             Genre = Properties.Resources.SPEECH;
             MaxRecordingTimeSeconds = DefaultMaxRecordingSeconds;
@@ -112,7 +112,10 @@ namespace OnlyR.Services.Options
             {
                 RecordingsLifeTimeDays = 0;
             }
-
+            if(DestinationFolder!= FileUtils.GetDefaultMyDocsDestinationFolder())
+            {
+                DestinationFolder = FileUtils.GetDefaultMyDocsDestinationFolder();
+            }
             if (MaxRecordingsInOneFolder < 10 || MaxRecordingsInOneFolder > 500)
             {
                 MaxRecordingsInOneFolder = DefaultMaxRecordings;

@@ -75,7 +75,7 @@ namespace OnlyR.Utils
         public static string GetLogFolder()
         {
             return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 AppNamePathSegment,
                 "Logs");
         }
@@ -86,7 +86,7 @@ namespace OnlyR.Utils
         /// <returns>Folder path</returns>
         public static string GetDefaultMyDocsDestinationFolder()
         {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppNamePathSegment);
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), AppNamePathSegment);
         }
 
         /// <summary>
@@ -351,7 +351,7 @@ namespace OnlyR.Utils
         {
             return DirectoryIsAvailable(rootFromOptions) 
                 ? rootFromOptions!
-                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppNamePathSegment);
+                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), AppNamePathSegment);
         }
 
         private static bool DirectoryIsAvailable(string? dir)
